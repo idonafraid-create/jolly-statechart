@@ -1,0 +1,55 @@
+{
+  "language": "zh-CN",
+  "status": "available",
+  "tracks": [
+    {
+      "id": "jojo-rest",
+      "title": "零钱太响",
+      "artist": "JOJO",
+      "status": "available",
+      "cover": "/jolly-statechart/assets/music/covers/jojo-rest.webp",
+      "sourceUrl": "https://suno.com/song/7b0a8fe2-e9c0-4c24-99c3-183b0e61e966",
+      "revision": 2,
+      "src": "/jolly-statechart/assets/music/audio/zh/jojo-rest.mp3",
+      "duration": 189.2,
+      "sampleRate": 48000,
+      "channels": 2,
+      "codec": "mp3",
+      "sha256": "46e01021f6e4945cdc17be87d493cbdddf077b521c273af2842acc8169ec614f",
+      "originalFile": "suno-originals/jojo-rest-zh.mp3"
+    },
+    {
+      "id": "lyly-lines",
+      "title": "歪得刚刚好",
+      "artist": "LYLY",
+      "status": "available",
+      "cover": "/jolly-statechart/assets/music/covers/lyly-lines.webp",
+      "sourceUrl": "https://suno.com/song/8e21adf1-b2a4-4918-b16b-b62b57419e42",
+      "revision": 1,
+      "src": "/jolly-statechart/assets/music/audio/zh/lyly-lines.mp3",
+      "duration": 153.52,
+      "sampleRate": 48000,
+      "channels": 2,
+      "codec": "mp3",
+      "sha256": "0a607e82953d4f34127f9c8db5053c858a717db5d36da440e143684d41946969",
+      "originalFile": "suno-originals/lyly-lines-zh.mp3"
+    },
+    {
+      "id": "yoyo-bite",
+      "title": "晚安有机关",
+      "artist": "YOYO",
+      "status": "available",
+      "cover": "/jolly-statechart/assets/music/covers/yoyo-bite.webp",
+      "sourceUrl": "https://suno.com/song/a477c017-2e19-45bf-a094-0d72264d0e44",
+      "revision": 2,
+      "src": "/jolly-statechart/assets/music/audio/zh/yoyo-bite.mp3",
+      "duration": 175.16,
+      "sampleRate": 48000,
+      "channels": 2,
+      "codec": "mp3",
+      "sha256": "039da34b734751db525f490abb7561efc6836a85453ab8ac14b0b65b99f1c4cf",
+      "originalFile": "suno-originals/yoyo-bite-zh.mp3"
+    }
+  ],
+  "note": "All three Chinese versions were explicitly selected by the user and verified from the formal Suno MP3 export, including source ID3, full decode and byte hashes."
+}

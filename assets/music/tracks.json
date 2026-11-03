@@ -1,0 +1,55 @@
+{
+  "status": "available",
+  "note": "All three user-selected English Suno originals are available locally and verified by source ID3, full decode and SHA256.",
+  "tracks": [
+    {
+      "id": "jojo-rest",
+      "title": "Room for a Rest",
+      "artist": "JOJO",
+      "genre": "Cool jazz / tenor-sax nocturne",
+      "cover": "/jolly-statechart/assets/music/covers/jojo-rest.webp",
+      "status": "available",
+      "selectedRevision": 2,
+      "sourceUrl": "https://suno.com/song/e1a29c2a-a9db-496b-afe0-38fe4f422185",
+      "src": "/jolly-statechart/assets/music/audio/jojo-rest.mp3",
+      "duration": 164.76,
+      "sampleRate": 48000,
+      "channels": 2,
+      "codec": "mp3",
+      "sha256": "0c9ba0d58a7e8a777156d0aa1d3f4c9324f9469e5bb99a19ed141c6357c0982d",
+      "originalFile": "suno-originals/jojo-rest-en.mp3"
+    },
+    {
+      "id": "lyly-lines",
+      "title": "Crooked Little Line",
+      "artist": "LYLY",
+      "genre": "Rockabilly / jump-jazz",
+      "cover": "/jolly-statechart/assets/music/covers/lyly-lines.webp",
+      "status": "available",
+      "src": "/jolly-statechart/assets/music/audio/lyly-lines.mp3",
+      "sourceUrl": "https://suno.com/song/f3c14199-6f81-47cf-b91d-6e790a7cd276",
+      "duration": 144.68,
+      "sampleRate": 48000,
+      "channels": 2,
+      "sha256": "c40a41909cec84a8438fbeb1a77c92b06ed604a860355029bc8db1c6286b449e",
+      "originalFile": "suno-originals/Crooked Little Line.mp3"
+    },
+    {
+      "id": "yoyo-bite",
+      "title": "Velvet Has Teeth",
+      "artist": "YOYO",
+      "genre": "Dark cabaret / minor-key swing guitar",
+      "cover": "/jolly-statechart/assets/music/covers/yoyo-bite.webp",
+      "status": "available",
+      "selectedRevision": 3,
+      "sourceUrl": "https://suno.com/song/a8d7989a-1377-41d4-b1ee-59c09c052f9d",
+      "src": "/jolly-statechart/assets/music/audio/yoyo-bite.mp3",
+      "duration": 159.96,
+      "sampleRate": 48000,
+      "channels": 2,
+      "codec": "mp3",
+      "sha256": "5791c57552d160194b0d90de392ce5d3f9214b7de89eb499e6e7d376ec2719a0",
+      "originalFile": "suno-originals/yoyo-bite-en.mp3"
+    }
+  ]
+}

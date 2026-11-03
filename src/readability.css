@@ -1,0 +1,79 @@
+/* Functional type and text-only contrast on the existing paper palette. */
+:root {
+  --muted: #65654f;
+  --coral-text: #a03953;
+}
+
+:root .masthead p,
+:root .masthead .sound,
+:root .cover > .eyebrow,
+:root .theatre-heading > .eyebrow,
+:root .score-top .eyebrow,
+:root .eyebrow,
+:root .chapter .chapter-meta,
+:root .chapter .plate-caption,
+:root .instrument-collection > .instrument-intro,
+:root .instrument-collection .instrument-eyebrow,
+:root .instrument-collection .instrument-caption {
+  font-size: 12px;
+}
+
+:root .chapter .branch-hint,
+:root .instrument-collection .instrument-control,
+:root .theatre-cues button {
+  font-size: 13px;
+}
+
+:root .chapter .plate-caption .pencil-note {
+  font-size: 14px;
+}
+
+:root .chapter .node .node-tag {
+  font-size: clamp(8px, .75vw, 10px);
+}
+
+:root .cover .cover-note,
+:root .cover-footer .pencil-note,
+:root .chapter .plate-caption .pencil-note,
+:root .chapter .node:not(.current) .node-tag {
+  color: var(--coral-text);
+}
+
+:root .colophon p > span,
+:root .colophon small,
+:root .vinyl-crate .vinyl-crate-genre,
+:root .vinyl-crate .vinyl-crate-item:not(.is-selected) .vinyl-crate-status {
+  color: #65654f;
+}
+
+:root .vinyl-crate .vinyl-crate-artist,
+:root .vinyl-crate .vinyl-crate-genre:not([lang^=zh]),
+:root .vinyl-crate .vinyl-crate-status:not([lang^=zh]),
+:root .paper-player .paper-player-subtitle,
+:root .paper-player .paper-player-times,
+:root .paper-player #count,
+:root .record-workbench .record-music-status {
+  font-size: 11px;
+}
+
+:root .record-workbench .paper-player .paper-player-subtitle {
+  margin-top: 3px;
+}
+
+:root .record-workbench .paper-player .paper-player-times {
+  margin-bottom: 5px;
+}
+
+@media (max-width: 720px) {
+  :root .chapter .node .node-tag {
+    display: none;
+  }
+
+  :root .chapter .branch-hint {
+    left: 0;
+    width: 100%;
+    bottom: 6px;
+    font-size: clamp(11px, 3.4vw, 13px);
+    text-align: center;
+  }
+}

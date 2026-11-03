@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f0e4">
+  <meta name="description" content="A midnight operating manual at The Jolly. JOJO, LYLY and YOYO turn a perfectly ordinary flowchart into a very irregular jazz performance.">
+  <title>Do not feed the arrows — THE JOLLY</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Crect width='50' height='50' rx='7' fill='%23f5f0e4'/%3E%3Cpath d='M10 30Q25 8 39 22M29 17l12 5-9 10' fill='none' stroke='%23284497' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="preload" href="/jolly-statechart/assets/fonts/SpecialElite-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/jolly-statechart/assets/fonts/CourierPrime-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="/jolly-statechart/style.css">
+
+</head>
+<body>
+  <svg class="ink-filters" xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false"><defs>
+    <filter id="ink-boil-a" x="-8%" y="-25%" width="116%" height="150%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".032 .095" numOctaves="2" seed="9" result="tooth"/><feDisplacementMap in="SourceGraphic" in2="tooth" scale="2.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+    <filter id="ink-boil-b" x="-8%" y="-25%" width="116%" height="150%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".032 .095" numOctaves="2" seed="23" result="tooth"/><feDisplacementMap in="SourceGraphic" in2="tooth" scale="2.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+    <filter id="ink-boil-c" x="-8%" y="-25%" width="116%" height="150%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".032 .095" numOctaves="2" seed="41" result="tooth"/><feDisplacementMap in="SourceGraphic" in2="tooth" scale="2.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+  </defs></svg>
+  <a class="skip-link" href="#procedure">Skip to the procedure</a>
+  <div class="paper-world">
+    <header class="masthead">
+      <a class="wordmark" href="#top" aria-label="The Jolly — back to the cover"><span class="wordmark-name">THE <span class="wordmark-title"><span class="wordmark-jo">JO</span><span class="wordmark-ll">LL</span><span class="wordmark-y">Y</span></span></span><canvas class="jolly-mark jolly-mark-raster" width="116" height="101" aria-hidden="true"></canvas></a>
+      <p>AFTER HOURS DEPARTMENT <span class="masthead-arrow" data-ink-icon="arrow-swoop" aria-hidden="true">↝</span> EST. 1963</p>
+      <button id="sound" class="sound" aria-pressed="false"><span data-ink-icon="music" aria-hidden="true">♪</span> <span class="sound-label">SOUND OFF</span></button>
+    </header>
+    <nav id="paper-stock-picker"></nav>
+    <main id="top">
+      <section class="cover" aria-labelledby="cover-title">
+        <p class="eyebrow">A MIDNIGHT OPERATING MANUAL <span>№ 001</span></p>
+        <div class="cover-layout">
+          <div class="cover-copy">
+            <span class="pencil-note cover-note" data-copy="coverNote">an orderly evening.<br>more or less.</span>
+            <h1 id="cover-title" data-copy="coverTitle">DO NOT<br>FEED THE<br><span>ARROWS.</span></h1>
+            <p class="cover-deck" data-copy="coverDeck">One immaculate plan.<br>Three very questionable musicians.</p>
+            <button class="start-button" id="start"><i data-ink-icon="play" aria-hidden="true">▷</i><span data-copy="start">LET IT UNFOLD</span><span data-ink-icon="arrow-up-right" aria-hidden="true">↗</span></button>
+            <p class="cover-runtime" data-copy="runtime" title="Improvisation is strictly forbidden. This rule is open to interpretation.">an after-hours irregularity ·<br>best enjoyed slowly</p>
+          </div>
+          <div class="cover-art" role="img" aria-label="JOJO the deadpan saxophonist, LYLY the wild double bassist and YOYO the small tabby guitarist">
+            <svg class="cover-threads" viewBox="0 0 660 650" aria-hidden="true">
+              <defs><marker id="cover-arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1l9 5-9 5" fill="none" stroke="context-stroke" stroke-width="1.5"/></marker></defs>
+              <path class="jojo-thread pencil-ghost" transform="translate(.9 -.7)" d="M15 105C30 30 150 45 190 80S280 170 330 105S430 25 505 65"/>
+              <path class="jojo-thread" d="M15 105C30 30 150 45 190 80S280 170 330 105S430 25 505 65"/>
+              <path class="yoyo-thread pencil-ghost" transform="translate(-.7 .9)" d="M535 165C670 180 620 440 545 485S450 520 410 570"/>
+              <path class="yoyo-thread" d="M535 165C670 180 620 440 545 485S450 520 410 570"/>
+              <path class="lyly-thread-shadow" d="M20 520C110 600 220 530 320 570S430 625 545 565"/>
+              <path class="coral-thread lyly-thread" d="M20 520C110 600 220 530 320 570S430 625 545 565"/>
+              <path class="little-rest" d="M367 29l-8 18 19-2-12 20 15 14"/>
+            </svg>
+            <span class="round-stamp">APPROVED<br><b>to go wrong</b><span>THE JOLLY · NIGHT SHIFT</span></span>
+            <div class="cover-cast">
+              <div class="sprite jojo" data-character="jojo"><img src="/jolly-statechart/assets/cast/trio-pencil.webp" alt="JOJO, a white bulldog in a grey jazz suit with her tenor saxophone" fetchpriority="high"></div>
+              <div class="sprite lyly" data-character="lyly"><img src="/jolly-statechart/assets/cast/trio-pencil.webp" alt="LYLY, a chocolate bully in a green suit, playing upright bass"></div>
+              <div class="sprite yoyo" data-character="yoyo"><img src="/jolly-statechart/assets/cast/trio-pencil.webp" alt="YOYO, a tiny tabby in lace with a rabbit-shaped electric guitar"></div>
+            </div>
+            <div class="art-caption">
+              <div class="art-notes"><span class="art-note note-jojo">JOJO / no talk.</span><span class="art-note note-lyly">LYLY / all bark.</span><span class="art-note note-yoyo">YOYO / all bite. <i data-ink-icon="heart" aria-hidden="true">♡</i></span></div>
+            </div>
+          </div>
+          <span class="art-number">FIG. 01 — STAFF, UNSUPERVISED</span>
+        </div>
+        <nav class="chapter-index" aria-labelledby="chapter-index-title">
+          <div class="chapter-index-head">
+            <span id="chapter-index-title" data-copy="procedure">TONIGHT’S PROCEDURE</span>
+            <p class="chapter-index-note"><span data-copy="instruction">PLEASE FOLLOW THE ARROWS.</span> <i data-copy="exception">unless the arrows follow you.</i></p>
+            <a class="chapter-index-scroll" href="#procedure"><span data-copy="scroll">SCROLL TO THE INCIDENT</span> <span data-ink-icon="arrow-down" aria-hidden="true">↓</span></a>
+          </div>
+          <ul class="chapter-index-links">
+            <li><a href="#act-1"><span class="chapter-index-number">I</span><img src="/jolly-statechart/assets/generated/hotel.webp" width="23" height="23" alt="" decoding="async"><i>The plan</i></a></li>
+            <li><a href="#act-2"><span class="chapter-index-number">II</span><img src="/jolly-statechart/assets/generated/metronome.webp" width="23" height="23" alt="" decoding="async"><i>The rest</i></a></li>
+            <li><a href="#act-3"><span class="chapter-index-number">III</span><img src="/jolly-statechart/assets/feedback-art/fork.webp" width="23" height="23" alt="" decoding="async"><i>The swing</i></a></li>
+            <li><a href="#act-4"><span class="chapter-index-number">IV</span><img src="/jolly-statechart/assets/generated/rabbit-case.webp" width="23" height="23" alt="" decoding="async"><i>The bite</i></a></li>
+            <li><a href="#instrument-sax"><span class="chapter-index-number">V–VII</span><img src="/jolly-statechart/assets/generated/microphone.webp" width="23" height="23" alt="" decoding="async"><i>The accomplices</i></a></li>
+            <li><a href="#paper-theatre"><img src="/jolly-statechart/assets/generated/chandelier.webp" width="23" height="23" alt="" decoding="async"><i>The bow</i></a></li>
+            <li><a href="#record-finale"><img src="/jolly-statechart/assets/generated/vinyl.webp" width="23" height="23" alt="" decoding="async"><i>Side B</i></a></li>
+          </ul>
+        </nav>
+      </section>
+      <div id="procedure"></div>
+      <div id="instrument-studies"></div>
+      <section class="theatre-section" id="paper-theatre" aria-labelledby="theatre-title">
+        <div class="theatre-heading"><p class="eyebrow" data-copy="theatreEyebrow">THE SAME PROCEDURE, WITH FEELING</p><h2 id="theatre-title" data-copy="theatreTitle">The paper takes a bow.</h2><p data-copy="theatreSub">Step back. It was a score all along.</p></div>
+        <div id="theatre"><img class="theatre-fallback" loading="lazy" src="/jolly-statechart/assets/stage-cels/closed.webp" alt="The Jolly paper theatre waiting behind its coral curtain"><p class="theatre-fallback">Three voices. One very bad idea.</p></div>
+        <p class="pencil-note theatre-footnote" data-copy="theatreFoot">one arrow is still dancing. management is aware.</p>
+        <div class="theatre-cues"><button data-node="encore" id="open-curtain">OPEN THE CURTAIN</button><button data-node="bow" id="curtain-call">TAKE A BOW</button></div>
+      </section>
+      <div id="record-finale"></div>
+      <footer class="colophon"><span class="wordmark"><span class="wordmark-name">THE <span class="wordmark-title"><span class="wordmark-jo">JO</span><span class="wordmark-ll">LL</span><span class="wordmark-y">Y</span></span></span><canvas class="jolly-mark jolly-mark-raster" width="116" height="101" aria-hidden="true"></canvas></span><p data-copy="colophon">NO TALK. ALL BARK. ALL BITE.<br><span>A small performance about taking the long way.</span></p><button id="show-score"><span data-copy="score">UNFOLD THE WHOLE SCORE</span> <span data-ink-icon="arrow-up-right" aria-hidden="true">↗</span></button><small>ENGLISH EDITION · VOL. 001</small></footer>
+    </main>
+  </div>
+  <nav class="player" aria-label="Performance controls">
+    <button id="restart" aria-label="Restart the performance" title="Restart (R)">↺</button>
+    <button id="prev" aria-label="Previous step" title="Previous step (←)">←</button>
+    <button id="play" class="play" aria-label="Play the performance" title="Play / pause (Space)">▶</button>
+    <button id="next" aria-label="Next step" title="Next step (→)">→</button>
+    <div class="player-label"><span id="step-label">THE HOUSE IS NOT QUITE READY</span><div class="timeline"><i id="timeline-fill"></i></div></div>
+    <span id="count">00 / 13</span><button id="speed" aria-label="Playback speed" title="Change speed">1×</button><span class="player-divider"></span><button id="overview" title="Show the whole score" aria-label="Show the whole score">☷</button>
+  </nav>
+  <dialog id="score-dialog" aria-labelledby="score-title"><div class="score-top"><div><p class="eyebrow">THE JOLLY / COMPLETE PROCEDURE</p><h2 id="score-title" data-copy="scoreTitle">A score for three.</h2></div><button id="close-score" aria-label="Close the score">✕</button></div><p class="score-intro" data-copy="scoreIntro">Every detour finds its way back. No musician left behind.</p><canvas id="score-canvas" aria-label="The complete branching flowchart for JOJO, LYLY and YOYO"></canvas><a class="model-link" href="/jolly-statechart/model/diagram.svg" target="_blank" rel="noopener">Open the full diagram ↗</a></dialog>
+  <div class="sr-only" id="announcement" aria-live="polite"></div>
+  <script type="module" src="/jolly-statechart/src/chapter-index.mjs"></script>
+  <script type="module" src="/jolly-statechart/app.mjs"></script>
+</body>
+</html>
