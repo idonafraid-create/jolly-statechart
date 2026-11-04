@@ -1,4 +1,7 @@
 @import url('/jolly-statechart/src/readability.css');
+:root{--opening-cloth:linear-gradient(#2a140a,#2a140a) 0 100%/100% 8.2vh no-repeat,radial-gradient(ellipse 74% 72% at 50% 50%,rgba(40,4,18,0) 30%,rgba(40,4,18,.62)),repeating-linear-gradient(90deg,#7c1430 0,#c93a52 2.6vmin,#dd5060 4.4vmin,#c93a52 6.2vmin,#7c1430 8.6vmin)}
+html.opening-pending,html.opening-pending body{overflow:hidden;background:#a32f4c}
+html.opening-pending body::before{content:"";position:fixed;inset:0;z-index:999;background:var(--opening-cloth)}
 @font-face{font-family:Special Elite;src:url('/jolly-statechart/assets/fonts/SpecialElite-Regular.ttf') format('truetype');font-display:swap}
 @font-face{font-family:Courier Prime;src:url('/jolly-statechart/assets/fonts/CourierPrime-Regular.ttf') format('truetype');font-display:swap}
 @font-face{font-family:Courier Prime;src:url('/jolly-statechart/assets/fonts/CourierPrime-Italic.ttf') format('truetype');font-style:italic;font-display:swap}

@@ -1,0 +1,290 @@
+{
+"source": "Desk Bell Overture.mp3",
+"sourceStart": 4.952,
+"bpm": 105.89,
+"bars": 4,
+"loopStart": 0.12,
+"duration": 9.066,
+"events": [
+{
+"t": 0.0,
+"beat": 0,
+"bar": 0,
+"inBar": 0,
+"kind": "beat",
+"strength": 0.25
+},
+{
+"t": 0.3019,
+"beat": 0,
+"bar": 0,
+"inBar": 0,
+"kind": "off",
+"strength": 1.0
+},
+{
+"t": 0.6037,
+"beat": 1,
+"bar": 0,
+"inBar": 1,
+"kind": "beat",
+"strength": 0.323
+},
+{
+"t": 0.8591,
+"beat": 1,
+"bar": 0,
+"inBar": 1,
+"kind": "off",
+"strength": 0.693
+},
+{
+"t": 1.161,
+"beat": 2,
+"bar": 0,
+"inBar": 2,
+"kind": "beat",
+"strength": 0.51
+},
+{
+"t": 1.4396,
+"beat": 2,
+"bar": 0,
+"inBar": 2,
+"kind": "off",
+"strength": 0.476
+},
+{
+"t": 1.6718,
+"beat": 3,
+"bar": 0,
+"inBar": 3,
+"kind": "beat",
+"strength": 0.284
+},
+{
+"t": 1.9969,
+"beat": 3,
+"bar": 0,
+"inBar": 3,
+"kind": "off",
+"strength": 0.603
+},
+{
+"t": 2.2988,
+"beat": 4,
+"bar": 1,
+"inBar": 0,
+"kind": "beat",
+"strength": 0.429
+},
+{
+"t": 2.5774,
+"beat": 4,
+"bar": 1,
+"inBar": 0,
+"kind": "off",
+"strength": 0.868
+},
+{
+"t": 2.8793,
+"beat": 5,
+"bar": 1,
+"inBar": 1,
+"kind": "beat",
+"strength": 0.36
+},
+{
+"t": 3.1347,
+"beat": 5,
+"bar": 1,
+"inBar": 1,
+"kind": "off",
+"strength": 1.0
+},
+{
+"t": 3.4366,
+"beat": 6,
+"bar": 1,
+"inBar": 2,
+"kind": "beat",
+"strength": 0.43
+},
+{
+"t": 3.7152,
+"beat": 6,
+"bar": 1,
+"inBar": 2,
+"kind": "off",
+"strength": 0.719
+},
+{
+"t": 3.9664,
+"beat": 7,
+"bar": 1,
+"inBar": 3,
+"kind": "beat",
+"strength": 0.65
+},
+{
+"t": 4.2028,
+"beat": 7,
+"bar": 1,
+"inBar": 3,
+"kind": "off",
+"strength": 0.694
+},
+{
+"t": 4.2957,
+"beat": 7,
+"bar": 1,
+"inBar": 3,
+"kind": "off",
+"strength": 0.371
+},
+{
+"t": 4.5743,
+"beat": 8,
+"bar": 2,
+"inBar": 0,
+"kind": "beat",
+"strength": 0.714
+},
+{
+"t": 4.853,
+"beat": 8,
+"bar": 2,
+"inBar": 0,
+"kind": "off",
+"strength": 0.767
+},
+{
+"t": 5.0996,
+"beat": 9,
+"bar": 2,
+"inBar": 1,
+"kind": "beat",
+"strength": 0.25
+},
+{
+"t": 5.3638,
+"beat": 9,
+"bar": 2,
+"inBar": 1,
+"kind": "off",
+"strength": 0.435
+},
+{
+"t": 5.7121,
+"beat": 10,
+"bar": 2,
+"inBar": 2,
+"kind": "beat",
+"strength": 0.25
+},
+{
+"t": 5.9907,
+"beat": 10,
+"bar": 2,
+"inBar": 2,
+"kind": "off",
+"strength": 0.651
+},
+{
+"t": 6.2694,
+"beat": 11,
+"bar": 2,
+"inBar": 3,
+"kind": "beat",
+"strength": 0.662
+},
+{
+"t": 6.548,
+"beat": 11,
+"bar": 2,
+"inBar": 3,
+"kind": "off",
+"strength": 0.788
+},
+{
+"t": 6.7995,
+"beat": 12,
+"bar": 3,
+"inBar": 0,
+"kind": "beat",
+"strength": 0.25
+},
+{
+"t": 7.1053,
+"beat": 12,
+"bar": 3,
+"inBar": 0,
+"kind": "off",
+"strength": 0.754
+},
+{
+"t": 7.3375,
+"beat": 13,
+"bar": 3,
+"inBar": 1,
+"kind": "beat",
+"strength": 0.367
+},
+{
+"t": 7.6858,
+"beat": 13,
+"bar": 3,
+"inBar": 1,
+"kind": "off",
+"strength": 0.869
+},
+{
+"t": 7.9328,
+"beat": 14,
+"bar": 3,
+"inBar": 2,
+"kind": "beat",
+"strength": 0.25
+},
+{
+"t": 8.1502,
+"beat": 14,
+"bar": 3,
+"inBar": 2,
+"kind": "off",
+"strength": 0.857
+},
+{
+"t": 8.2663,
+"beat": 14,
+"bar": 3,
+"inBar": 2,
+"kind": "off",
+"strength": 1.0
+},
+{
+"t": 8.5449,
+"beat": 15,
+"bar": 3,
+"inBar": 3,
+"kind": "beat",
+"strength": 0.523
+},
+{
+"t": 8.7307,
+"beat": 15,
+"bar": 3,
+"inBar": 3,
+"kind": "off",
+"strength": 0.798
+},
+{
+"t": 8.8236,
+"beat": 15,
+"bar": 3,
+"inBar": 3,
+"kind": "off",
+"strength": 0.775
+}
+]
+}

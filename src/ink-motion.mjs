@@ -13,6 +13,44 @@ function canvas(width, height) {
   return c;
 }
 
+// Reading millions of sprite pixels stalls whatever is on screen, so it can run in a worker instead.
+let inkWorker = null, nextJob = 0, deferring = false;
+const jobs = new Map(), splitting = new Map();
+const workerAvailable = () => typeof Worker === 'function' && typeof OffscreenCanvas === 'function' && typeof createImageBitmap === 'function';
+function askWorker(message, transfer) {
+  if (!inkWorker) {
+    inkWorker = new Worker(new URL('./ink-worker.mjs', import.meta.url), { type: 'module' });
+    inkWorker.onmessage = ({ data }) => { jobs.get(data.id)?.(data); jobs.delete(data.id); };
+    inkWorker.onerror = () => { deferring = false; for (const done of jobs.values()) done({ error: 'worker failed' }); jobs.clear(); };
+  }
+  const id = ++nextJob;
+  return new Promise((resolve, reject) => {
+    jobs.set(id, data => (data.error ? reject(new Error(data.error)) : resolve(data)));
+    inkWorker.postMessage({ id, ...message }, transfer);
+  });
+}
+/** While on, a sprite's first draws show its plain crop and the boiled frames arrive from the worker. */
+export function deferInkWork(on) { deferring = Boolean(on) && workerAvailable(); }
+
+/** The same cut as splitCastAtlas, off the main thread where possible, shared by everyone asking for one sheet. */
+export function splitCastSoon(image) {
+  const known = castAtlases.get(image), key = image.currentSrc || image.src;
+  if (known) return Promise.resolve(known);
+  if (!workerAvailable() || !key) return Promise.resolve(splitCastAtlas(image));
+  if (!splitting.has(key)) {
+    splitting.set(key, createImageBitmap(image)
+      .then(bitmap => askWorker({ kind: 'split', bitmap }, [bitmap]))
+      .then(({ actors }) => Object.fromEntries(Object.entries(actors).map(([who, bitmap]) => {
+        const cut = canvas(bitmap.width, bitmap.height);
+        cut.getContext('2d').drawImage(bitmap, 0, 0);
+        bitmap.close();
+        return [who, cut];
+      })))
+      .catch(() => splitCastAtlas(image)));
+  }
+  return splitting.get(key).then(result => { castAtlases.set(image, result); return result; });
+}
+
 /** Extract overlapping atlas columns by alpha connectivity, preserving each actor's pixels. */
 export function splitCastAtlas(image) {
   if (castAtlases.has(image)) return castAtlases.get(image);
@@ -116,7 +154,7 @@ function grain(frame, width, height, phase, amplitude) {
   f.globalCompositeOperation = 'source-over';
 }
 
-function makeFrames(image, rect, amplitude) {
+export function makeFrames(image, rect, amplitude) {
   const width = Math.max(1, Math.round(rect[2])), height = Math.max(1, Math.round(rect[3]));
   const original = canvas(width, height), g = original.getContext('2d', { willReadFrequently: true });
   g.drawImage(image, ...rect, 0, 0, width, height);
@@ -188,8 +226,16 @@ export function drawBoiledSprite(ctx, image, sourceRect, destRect, { phase = 0, 
   const key = sourceRect.join(','); let cached = crops.get(key);
   // A crop keeps only its current amplitude, so changing a shot cannot grow an unbounded cache.
   if (!cached || cached.amplitude !== amount) {
-    cached = { amplitude: amount, frames: makeFrames(image, sourceRect, amount) }; crops.set(key, cached);
+    if (deferring) {
+      const entry = cached = { amplitude: amount, frames: null };
+      createImageBitmap(image, ...sourceRect.map(Math.round))
+        .then(bitmap => askWorker({ kind: 'frames', bitmap, amount }, [bitmap]))
+        .then(({ frames }) => { entry.frames = frames; })
+        .catch(() => { deferring = false; if (crops.get(key) === entry) crops.delete(key); });
+    } else cached = { amplitude: amount, frames: makeFrames(image, sourceRect, amount) };
+    crops.set(key, cached);
   }
+  if (!cached.frames) { ctx.drawImage(image, ...sourceRect, ...destRect); return; }
   const held = ((Math.floor(Number.isFinite(phase) ? phase : 0) % 3) + 3) % 3;
   ctx.drawImage(cached.frames[held], ...destRect);
 }

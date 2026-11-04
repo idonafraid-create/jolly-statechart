@@ -8,7 +8,7 @@ import { mountHeadingHighlights } from './src/heading-highlights.mjs';
 import { seamCrossesRect, seamPath } from "./src/seam-layout.mjs";
 import { NODES, EDGES, ROUTES, DEFAULT_ROUTE } from './src/story.mjs';
 import { copy } from './src/copy.mjs';
-import { drawBoiledSprite, inkPhase, poseFrame, splitCastAtlas } from './src/ink-motion.mjs';
+import { drawBoiledSprite, inkPhase, poseFrame, splitCastAtlas, splitCastSoon } from './src/ink-motion.mjs';
 import { drawPencilArrow, pencilArrowPaths, makeTicketSvg } from './src/looseleaf.mjs';
 import { drawMovingProp, PROP_SCORE } from './src/prop-motion.mjs';
 import { createInstrumentChapters } from './src/instruments.mjs';
@@ -18,6 +18,11 @@ import { mountPaperStockSwitcher } from './src/paper-stock-switcher.mjs';
 import { createRecordMusicController, RECORD_WORKBENCH_CSS } from './src/record-music.mjs';
 
 const $ = (q) => document.querySelector(q);
+const initialHash = location.hash, initialNavigation = new AbortController();
+let initialNavigationCancelled = false;
+for (const event of ['pointerdown', 'keydown', 'wheel', 'touchstart', 'hashchange']) {
+  addEventListener(event, () => { initialNavigationCancelled = true; }, { once: true, passive: true, signal: initialNavigation.signal });
+}
 const playerHost=document.querySelector('nav.player');
 const player = mountPaperPlayer(playerHost);
 player.sync({ playing: false, duration: '—:—', elapsed: 0, stepLabel: 'Preparing the record library.' });
@@ -475,6 +480,7 @@ function seamAnchor(id, outgoing) {
 }
 
 function layoutSeams() {
+  if (scenes.some(scene => !scene.actors)) return;
   if (matchMedia('(max-width:720px)').matches) {
     for (const seam of seams) seam.canvas.hidden = true;
     return;
@@ -733,7 +739,7 @@ await Promise.all([document.fonts.ready, ...Object.entries(imageSources).filter(
 castFrames = [splitCastAtlas(images.cast)];
 const coverActors = [...document.querySelectorAll('.cover-cast .sprite')].map(el => {
   const canvas = document.createElement('canvas'); canvas.setAttribute('aria-hidden', 'true'); canvas.style.cssText = 'position:absolute;left:-40px;top:-70px;width:calc(100% + 80px);height:calc(100% + 70px);';
-  el.style.overflow = 'visible'; el.querySelector('img').hidden = true; el.append(canvas); return { el, canvas, who: el.dataset.character };
+  el.style.overflow = 'visible'; el.append(canvas); return { el, canvas, who: el.dataset.character };
 });
 const accentPaints = new Map();
 const accentObserver = new IntersectionObserver(entries => {
@@ -962,6 +968,7 @@ function paintCover(time) {
   }
 }
 resizeCoverActors(); scenes.forEach(buildScene);interludes.forEach(resizeHouse);paintCover(0);scenes.forEach(s=>paintScene(s,0));interludes.forEach(s=>paintHouse(s,0));sync();
+coverActors.forEach(a => { a.el.querySelector('img').hidden = true; });
 mountHeadingHighlights();
 // Paint the cover cel first, then split and warm the later drawings between frames.
 const castReady = (async () => {
@@ -969,7 +976,7 @@ const castReady = (async () => {
   const frames = [...castFrames];
   for (const id of actionIds) {
     await new Promise(resolve => requestAnimationFrame(resolve));
-    frames.push(splitCastAtlas(images[id]));
+    frames.push(await splitCastSoon(images[id]));
   }
   castFrames = frames;
   scheduleSeams();
@@ -993,7 +1000,8 @@ function frame(time) {
   const delta = Math.min(time - previous, 1000); previous = time;
   if (!document.hidden) {
     if (state.playing) { state.elapsed += delta * state.speed;if (state.elapsed >= 9400) { if (state.index < route().length - 1) go(state.index + 1, { play: true }); else { state.playing = false; sync(); } } }
-    const tick = Math.floor(time / 66.667);
+    // Nobody can see the page while the door stands in front of it.
+    const tick = Math.floor(time / (document.documentElement.matches('.opening-active,.opening-pending') ? 500 : 66.667));
     if (coverVisible && (!reduced && tick !== lastTick)) paintCover(time);
     for (const scene of scenes) if (scene.visible && (scene.dirty || (!reduced && tick !== lastTick))) paintScene(scene, time);
     for(const panel of interludes)if(panel.visible&&(panel.dirty||(!reduced&&tick!==lastTick)))paintHouse(panel,time);
@@ -1004,6 +1012,13 @@ function frame(time) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+// Chapters added asynchronously need one anchor restore after their final initial layout.
+Promise.allSettled([recordReady, document.fonts.ready]).then(() => requestAnimationFrame(() => {
+  initialNavigation.abort();
+  if (!initialHash || initialNavigationCancelled || location.hash !== initialHash) return;
+  try { document.getElementById(decodeURIComponent(initialHash.slice(1)))?.scrollIntoView({ behavior: 'instant', block: 'start' }); }
+  catch { /* A malformed bookmark leaves the native document available. */ }
+}));
 const theatreObserver = new IntersectionObserver(async entries => {
   if (!entries.some(e => e.isIntersecting)) return;
   theatreObserver.disconnect();
