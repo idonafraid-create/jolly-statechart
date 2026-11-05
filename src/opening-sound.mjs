@@ -27,7 +27,11 @@ export function createOpeningSound() {
       const Context = window.AudioContext || window.webkitAudioContext;
       if (!Context) return false;
       context = new Context();
-      master = context.createGain(); master.gain.value = muted ? 0 : 1; master.connect(context.destination);
+      master = context.createGain(); master.gain.value = muted ? 0 : 1;
+      // Bell, cues and band can land together; a limiter keeps that from clipping.
+      const limiter = context.createDynamicsCompressor();
+      limiter.threshold.value = -3; limiter.knee.value = 3; limiter.ratio.value = 12; limiter.attack.value = .002; limiter.release.value = .1;
+      master.connect(limiter); limiter.connect(context.destination);
     }
     if (context.state === 'suspended') void context.resume();
     return true;

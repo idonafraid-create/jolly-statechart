@@ -241,7 +241,7 @@ export function drawMovingProp(g, image, object, time, { reducedMotion = false, 
     if(Math.sin(t*.75)>.85)sparkle(g,52,80,2.6,'#c39b46',phase);
   }else if(name==='looseleafTicket'){
     const p=clamp(age/.55),bounce=reducedMotion?0:Math.sin(clamp(age/.75)*Math.PI)*2;
-    g.save();g.globalAlpha=p;g.translate(39.7,50-bounce);g.rotate(-.06);g.fillStyle=WINE;g.font='8px "Special Elite"';g.textAlign='center';g.fillText('ONE MORE',0,0);g.font='4px "Courier Prime"';g.fillText('APPROVED / PROBABLY',0,14);g.restore();
+    g.save();g.globalAlpha=p;g.translate(39.7,50-bounce);g.rotate(-.06);g.fillStyle='#16246e';g.font='8px "Special Elite"';g.textAlign='center';g.fillText('ONE MORE',0,0);g.font='4px "Courier Prime"';g.fillText('APPROVED / PROBABLY',0,14);g.restore();
   }
   g.restore();
 }

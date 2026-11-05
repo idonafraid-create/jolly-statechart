@@ -63,7 +63,7 @@ function measureLines(target, keyword, range, origin) {
   return lines;
 }
 
-export function drawTextSwipe(art, text, keyword, seed, previousGeometry = '') {
+export function drawTextSwipe(art, text, keyword, seed, previousGeometry = '', { bandShare } = {}) {
   swipeContext ??= document.createElement('canvas').getContext('2d');
   swipeRange ??= document.createRange();
   const style = getComputedStyle(text);
@@ -81,7 +81,7 @@ export function drawTextSwipe(art, text, keyword, seed, previousGeometry = '') {
     const baseline = h * fontAscent / (fontAscent + fontDescent);
     const ascent = metrics.actualBoundingBoxAscent || GUESS_RATIOS.cap * size;
     const glyphHeight = ascent + Math.max(0, metrics.actualBoundingBoxDescent || 0);
-    const band = Math.max(1, glyphHeight * .43 - w * .004);
+    const band = bandShare ? glyphHeight * bandShare : Math.max(1, glyphHeight * .43 - w * .004);
     const params = {
       size, band, y: baseline - ascent + glyphHeight * .58 - band / 2,
       first: index === 0, last: index === lines.length - 1,

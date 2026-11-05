@@ -182,13 +182,18 @@ export async function mountDoor({ report = {}, onExit } = {}) {
   raiseButton.addEventListener('pointerleave', () => { if (!raising) scene?.peek(0); });
   root.querySelector('.opening-call-skip').addEventListener('click', event => { event.preventDefault(); leave('curtain-skip', 380); });
 
-  for (const [control, color, name] of [[ringButton, '#ed9ba9', 'ring'], [enterLink, '#c5de8a', 'enter']]) {
+  const swipes = [[ringButton, '#ed9ba9', 'ring'], [enterLink, '#c5de8a', 'enter']].map(([control, color, name]) => {
     const label = control.querySelector('.action-label'), art = document.createElement('span');
     art.className = 'heading-highlights'; art.setAttribute('aria-hidden', 'true');
     art.style.setProperty('--ll-bubblegum', color);
     label.parentElement.append(art);
-    drawTextSwipe(art, label, label.textContent, `jolly-opening-action:${name}`);
-  }
+    return { label, art, seed: `jolly-opening-action:${name}`, geometry: '' };
+  });
+  // The strokes are measured from the words, so they are drawn again whenever the plate takes its size or the type arrives.
+  const drawSwipes = () => { for (const swipe of swipes) swipe.geometry = drawTextSwipe(swipe.art, swipe.label, swipe.label.textContent, swipe.seed, swipe.geometry, { bandShare: .52 }); };
+  drawSwipes();
+  root.querySelector('.opening-plaque').addEventListener('plate-sized', drawSwipes);
+  document.fonts?.load('24px "Special Elite"').then(drawSwipes, () => {});
   // The stroke finishes before the thing it promises happens, as on the stage backdrop buttons.
   const strike = control => new Promise(resolve => {
     control.dataset.swiped = '';
@@ -235,7 +240,8 @@ export async function mountDoor({ report = {}, onExit } = {}) {
 
   function finish(reason) {
     report.state = 'entered'; report.reason = reason; report.exitAt = performance.now();
-    document.documentElement.classList.remove('opening-active');
+    document.documentElement.classList.remove('opening-active', 'opening-leaving');
+    dispatchEvent(new Event('jolly:door-left'));
     held.forEach(element => { element.inert = false; });
     cancelAnimationFrame(filmFrame);
     root.remove();
@@ -254,6 +260,10 @@ export async function mountDoor({ report = {}, onExit } = {}) {
   async function leave(reason, duration = 680) {
     if (finished) return;
     finished = true;
+    document.documentElement.classList.add('opening-leaving');
+    // Whoever left the sound on at the door expects the page to keep making it, and its label has to say so before the page shows.
+    // A door that gave up leaves with no animation, and nobody chose anything at it.
+    if (duration) { window.jollyDoorSound = !sound.muted; dispatchEvent(new Event('jolly:door-sound')); }
     skip.classList.remove('visible');
     sound.stopLoop(.2);
     if (duration) {

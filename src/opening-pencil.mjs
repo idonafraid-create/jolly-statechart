@@ -40,7 +40,7 @@ export function mergeGeometries(geometries) {
 }
 
 // Cloth has broad, soft light and deep folds. The hand-painted sphere's hot highlights turned the drape into raw meat.
-const CLOTH_RAMP = [[0, 70, 8, 32], [.28, 148, 22, 52], [.56, 214, 56, 76], [.8, 238, 92, 98], [1, 250, 150, 136]];
+const CLOTH_RAMP = [[0, 50, 4, 22], [.28, 112, 12, 38], [.56, 170, 30, 54], [.8, 200, 58, 72], [1, 226, 108, 102]];
 const WOOD_RAMP = [[0, 30, 14, 8], [.3, 62, 32, 16], [.56, 100, 56, 28], [.8, 136, 84, 44], [1, 184, 124, 70]];
 function paintedSphere(ramp, size = 256) {
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = size;

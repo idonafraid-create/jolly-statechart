@@ -476,7 +476,7 @@ export async function createOverture(canvas) {
   // — The title, set where the page will set it, so the star opens on what you have just read.
   function sceneTitle(t) {
     g.drawImage(paperSheet, 0, 0);
-    const size = (WIDE ? 150 : 158) * U, x = WIDE ? .05 * W : .07 * W, top = WIDE ? .3 * H : .22 * H, gap = size * 1.14;
+    const size = (WIDE ? 150 : 158) * U, x = WIDE ? .05 * W : .07 * W, top = WIDE ? .34 * H : .22 * H, gap = size * 1.14;
     ['DO NOT', 'FEED THE', 'ARROWS.'].forEach((text, i) => slap(t, titleHits[i] - LAND, x, top + gap * i, { drop: .34, shadow: false }, () => {
       g.font = `${size}px "Special Elite"`; g.fillStyle = C.ink; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
       if (i === 2) {

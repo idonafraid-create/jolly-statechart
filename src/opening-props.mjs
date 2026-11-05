@@ -1,6 +1,6 @@
-// Small things that make the desk a place: a banker's lamp keeping time and a card asking you, politely, to ring.
+// Small things that make the desk a place: a banker's lamp keeping time, a register to sign and a card asking you, politely, to ring.
 import * as THREE from 'three';
-import { inkMaterial, pencilMaterial, turnedNormals } from './opening-pencil.mjs';
+import { inkMaterial, mergeGeometries, pencilMaterial, turnedNormals } from './opening-pencil.mjs';
 import { brassFill, paintWalnut } from './opening-wood.mjs';
 
 function paintCard() {
@@ -19,6 +19,30 @@ function paintCard() {
   letters('RING', 262, '100px "Special Elite",serif', 216, 308);
   g.fillStyle = '#e4676f'; g.fillRect(180, 318, 360, 8);
   letters('once. allegedly.', 376, 'italic bold 38px "Courier Prime",monospace', 356, 396);
+  return canvas;
+}
+
+// The hotel register, open at tonight's page. Who signed in is the joke; nobody will read it, but it should be true.
+function paintRegister() {
+  // Drawn on a 1024-wide page and shrunk: it is never more than about 400px across on screen.
+  const canvas = document.createElement('canvas'); canvas.width = 768; canvas.height = 528;
+  const g = canvas.getContext('2d'); g.scale(.75, .75);
+  g.fillStyle = '#f4ecd8'; g.fillRect(0, 0, 1024, 704);
+  const spine = g.createLinearGradient(512 - 120, 0, 512 + 120, 0);
+  spine.addColorStop(0, 'rgba(90,60,30,0)'); spine.addColorStop(.5, 'rgba(90,60,30,.42)'); spine.addColorStop(1, 'rgba(90,60,30,0)');
+  g.fillStyle = spine; g.fillRect(0, 0, 1024, 704);
+  g.textBaseline = 'alphabetic';
+  for (const left of [52, 564]) {
+    g.fillStyle = '#16246e'; g.font = '46px "Special Elite",serif';
+    g.fillText(left < 500 ? 'THE REGISTER' : 'TONIGHT', left, 84);
+    g.strokeStyle = 'rgba(33,64,214,.5)'; g.lineWidth = 3;
+    for (let row = 0; row < 7; row++) { g.beginPath(); g.moveTo(left, 138 + row * 80); g.lineTo(left + 408, 138 + row * 80); g.stroke(); }
+    g.strokeStyle = 'rgba(178,50,70,.55)'; g.beginPath(); g.moveTo(left + 300, 102); g.lineTo(left + 300, 648); g.stroke();
+  }
+  g.fillStyle = '#2140d6'; g.font = 'italic bold 40px "Courier Prime",monospace';
+  [['JOJO', 'no talk', 128], ['LYLY', 'all bark', 208], ['YOYO', 'all bite', 288]].forEach(([who, how, y]) => { g.fillText(who, 62, y); g.font = 'italic 30px "Courier Prime",monospace'; g.fillText(how, 200, y); g.font = 'italic bold 40px "Courier Prime",monospace'; });
+  g.fillStyle = '#a03953';
+  g.fillText('room?', 62, 368);
   return canvas;
 }
 
@@ -55,6 +79,11 @@ export function deskProps(shared, kit) {
   mesh(new THREE.CylinderGeometry(.0048, .0048, .2, 6).translate(0, -.1, 0), brass, chain, null);
   mesh(new THREE.SphereGeometry(.018, 10, 8).translate(0, -.21, 0), brass, chain, fine);
 
+  const cream = keep(pencilMaterial(shared, kit.matcap.cream, { hatch: .1, hatchColor: '#7a6650', rim: 0, fleck: .14, lift: .3 }));
+  const cobalt = keep(pencilMaterial(shared, kit.matcap.cobalt, { hatch: .35, hatchColor: '#0d1548', rim: 0, fleck: .3 }));
+  const crimson = keep(pencilMaterial(shared, kit.matcap.crimson, { hatch: .3, hatchColor: '#3a0a16', rim: .05, fleck: .22, gain: 1.05 }));
+  const wood = keep(pencilMaterial(shared, kit.matcap.wood, { hatch: .3, hatchColor: '#1c0c06', rim: 0, fleck: .2 }));
+
   // Tent card.
   const cardTexture = keep(new THREE.CanvasTexture(paintCard())); cardTexture.anisotropy = 8;
   const faceMaterial = keep(new THREE.ShaderMaterial({
@@ -70,6 +99,40 @@ export function deskProps(shared, kit) {
   const shadowMaterial = keep(new THREE.MeshBasicMaterial({ color: '#1a1030', transparent: true, opacity: .28, toneMapped: false, depthWrite: false }));
   const cardShadow = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.08, .26)), shadowMaterial); cardShadow.rotation.x = -Math.PI / 2; cardShadow.position.set(.05, .002, -.16); card.add(cardShadow);
 
+  // The register, open on a slanted walnut stand, with a pen lying across it. Everything is laid out from the front edge back, then merged by material: it is a small prop and shouldn't cost a dozen draws.
+  const WIDE = 1.06, DEEP = .76, TILT = .3;
+  const register = new THREE.Group(); group.add(register);
+  const onLean = new THREE.Matrix4().compose(new THREE.Vector3(0, .018, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(TILT, 0, 0)), new THREE.Vector3(1, 1, 1));
+  const onPen = onLean.clone().multiply(new THREE.Matrix4().compose(new THREE.Vector3(.27, .1, -.36), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, .62, 0)), new THREE.Vector3(1, 1, 1)));
+  const lots = new Map(), inkLots = new Map();
+  const part = (geometry, material, shell, matrix) => {
+    if (matrix) geometry.applyMatrix4(matrix);
+    (lots.get(material) ?? lots.set(material, []).get(material)).push(geometry);
+    (inkLots.get(shell) ?? inkLots.set(shell, []).get(shell)).push(geometry.clone());
+  };
+  const wedgeShape = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(-DEEP * Math.cos(TILT), 0), new THREE.Vector2(-DEEP * Math.cos(TILT), DEEP * Math.sin(TILT))]);
+  part(new THREE.ExtrudeGeometry(wedgeShape, { depth: WIDE - .1, bevelEnabled: false }).rotateY(-Math.PI / 2).translate((WIDE - .1) / 2, 0, 0), wood, ink);
+  part(new THREE.BoxGeometry(WIDE, .03, DEEP).translate(0, 0, -DEEP / 2), cobalt, ink, onLean);
+  part(new THREE.BoxGeometry(WIDE - .05, .034, DEEP - .05).translate(0, .026, -DEEP / 2), cream, fine, onLean);
+  // A ribbon and the brass ledge that stops the book sliding off.
+  part(new THREE.BoxGeometry(.05, .006, .2).translate(.2, .02, .07), crimson, fine, onLean);
+  part(new THREE.BoxGeometry(WIDE + .05, .05, .03).translate(0, .01, .012), brass, ink, onLean);
+  // A fountain pen: barrel, cap band, nib.
+  part(new THREE.CylinderGeometry(.021, .017, .42, 12).rotateZ(Math.PI / 2), crimson, ink, onPen);
+  part(new THREE.CylinderGeometry(.023, .023, .035, 12).rotateZ(Math.PI / 2).translate(.08, 0, 0), brass, fine, onPen);
+  part(new THREE.ConeGeometry(.016, .09, 10).rotateZ(Math.PI / 2).translate(-.255, 0, 0), brass, fine, onPen);
+  for (const lot of [lots, inkLots]) for (const [material, geometries] of lot) register.add(new THREE.Mesh(keep(mergeGeometries(geometries)), material));
+  // The open pages swell away from the gutter.
+  const leaning = new THREE.Group(); leaning.position.set(0, .018, 0); leaning.rotation.x = TILT; register.add(leaning);
+  const pagesShape = new THREE.PlaneGeometry(WIDE - .07, DEEP - .06, 36, 1).rotateX(-Math.PI / 2).translate(0, 0, -DEEP / 2);
+  const pageAt = pagesShape.attributes.position;
+  for (let i = 0; i < pageAt.count; i++) pageAt.setY(i, .046 + .03 * Math.sin(Math.min(1, Math.abs(pageAt.getX(i)) / ((WIDE - .07) / 2) * 1.05) * Math.PI) ** .7);
+  const pageTexture = keep(new THREE.CanvasTexture(paintRegister())); pageTexture.anisotropy = 8;
+  const pagesMaterial = keep(new THREE.ShaderMaterial({ uniforms: { ...faceMaterial.uniforms, uMap: { value: pageTexture } }, vertexShader: faceMaterial.vertexShader, fragmentShader: faceMaterial.fragmentShader }));
+  pagesMaterial.toneMapped = false;
+  leaning.add(new THREE.Mesh(keep(pagesShape), pagesMaterial));
+  const registerShadow = new THREE.Mesh(keep(new THREE.PlaneGeometry(WIDE + .16, .3)), shadowMaterial); registerShadow.rotation.x = -Math.PI / 2; registerShadow.position.set(.05, .002, -.06); register.add(registerShadow);
+
   const chainState = { value: 0, velocity: 0 }, cardState = { value: 0, velocity: 0 };
   let power = 0;
   return {
@@ -78,6 +141,8 @@ export function deskProps(shared, kit) {
       group.visible = visible;
       card.position.set(cardX, 0, cardZ); card.rotation.y = .36;
       lamp.position.set(lampX, 0, lampZ); lamp.rotation.y = .28;
+      // In front of the lamp, turned a little toward whoever is about to sign.
+      register.position.set(lampX + .1, 0, lampZ + 1.46); register.rotation.y = -.2; register.scale.setScalar(.9);
     },
     strike() { chainState.velocity += 5.5; cardState.velocity += 1.2; power = 1; },
     beat(strength) { chainState.velocity += strength * .9; power = Math.max(power, .55 + strength * .35); },

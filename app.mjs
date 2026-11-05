@@ -8,6 +8,7 @@ import { mountHeadingHighlights } from './src/heading-highlights.mjs';
 import { seamCrossesRect, seamPath } from "./src/seam-layout.mjs";
 import { NODES, EDGES, ROUTES, DEFAULT_ROUTE } from './src/story.mjs';
 import { copy } from './src/copy.mjs';
+import { sfx } from './src/sfx.mjs';
 import { drawBoiledSprite, inkPhase, poseFrame, splitCastAtlas, splitCastSoon } from './src/ink-motion.mjs';
 import { drawPencilArrow, pencilArrowPaths, makeTicketSvg } from './src/looseleaf.mjs';
 import { drawMovingProp, PROP_SCORE } from './src/prop-motion.mjs';
@@ -52,7 +53,10 @@ function alignCoverArt() {
 document.fonts.ready.then(alignCoverArt);
 new ResizeObserver(alignCoverArt).observe($('.cover-layout'));
 
-const C = { ink: '#2140d6', dark: '#193489', coral: '#e97780', coralText: '#a03953', green: '#376d34', lime: '#ade408', wine: '#8e1b2c', cream: '#fbf5e6' };
+const C = { ink: '#2140d6', dark: '#193489', coral: '#e97780', coralText: '#a03953', green: '#376d34', lime: '#ade408', wine: '#8e1b2c', cream: '#fbf5e6', activeCard: '#f6ddd5' };
+// The house lights, for the After Hours sample. Every drawing reads its ink from here, so a change is one repaint.
+const HOUSE_UP = { ...C }, HOUSE_DOWN = { ink: '#efe6d0', dark: '#f2d48a', coral: '#f08a90', coralText: '#f7a6ac', green: '#b7d66a', lime: '#c9e85a', wine: '#ffb3bf', cream: '#2a1a12', activeCard: '#54202f' };
+if (document.documentElement.dataset.house === 'down') Object.assign(C, HOUSE_DOWN);
 let BOIL = 0, recordingActors = null, recordingProps = null, castFrames = [], motionReady = false, motionEpoch = 0;
 const ACTOR_INK = { jojo: { fps:3.1, amount:1.9 }, lyly: { fps:6.4, amount:2.6 }, yoyo: { fps:4.7, amount:2.2 } };
 const phaseAt = (time, fps = 5, salt = 0) => reduced ? 0 : Math.floor(Math.max(0,time) * fps / 1000 + salt) % 3;
@@ -166,7 +170,7 @@ function ticket(g, x, y, w, h, { active = false, id = '', header = true } = {}) 
   for (let i = 0; i <= 6; i++) points.push([x + w / 2 - i % 2 * 3, y - h / 2 + h * i / 6]);
   for (let i = 0; i <= 15; i++) points.push([x + w / 2 - w * i / 15, y + h / 2 + (i % 2 ? -4 : 1) + r()]);
   points.push([x - w / 2 + 1, y - h / 2]); const p = new Path2D(); points.forEach(([a, b], i) => i ? p.lineTo(a, b) : p.moveTo(a, b)); p.closePath();
-  g.save(); g.shadowColor = '#453f3715'; g.shadowBlur = 0; g.shadowOffsetX = 5; g.shadowOffsetY = 5; g.fillStyle = active ? '#f6ddd5' : C.cream; g.fill(p); g.restore();
+  g.save(); g.shadowColor = '#453f3715'; g.shadowBlur = 0; g.shadowOffsetX = 5; g.shadowOffsetY = 5; g.fillStyle = active ? C.activeCard : C.cream; g.fill(p); g.restore();
   hatch(g, p, { x: x - w / 2, y: y - h / 2, w, h }, accentFor(id), active ? .45 : .19, 4.1);
   pen(g, points, { seed: hash(id), close: true, color: active ? C.wine : C.ink, width: active ? 2.3 : 1.6 });
   if (header) pen(g, [[x - w / 2 + 9, y - h / 2 + 21], [x + w / 2 - 9, y - h / 2 + 20]], { color: C.coral, alpha: .6, width: .8, seed: 17 });
@@ -320,6 +324,7 @@ function buildScene(scene) {
   scene.layers.push(layer);
   }
   scene.layer = scene.layers[0];
+  if (scene.inReach) settleScene(scene);
   scene.dirty = true;
 }
 function pointAt(points, t) {
@@ -431,19 +436,21 @@ function drawPerformance(g, scene, id, time) {
     }
   }
 }
-let audio;
-const audioBuffers = new Map(), sounding = new Set();
+// null until the visitor has chosen; the door's choice carries over into the page.
+let soundChoice = null;
+function setSound(on, chosen = true) {
+  state.sound = on; if (chosen) soundChoice = on;
+  $('#sound').setAttribute('aria-pressed', String(on)); $('#sound .sound-label').textContent = on ? copy.ui.soundOn : copy.ui.soundOff;
+}
 async function soundFor(id) {
   if (!state.sound || id === 'rest') return;
   try {
-    audio ??= new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') await audio.resume();
     const instrument = id==='rabbit'?'guitar':['yoyo', 'bite', 'encore', 'bow', 'checkin','side-b'].includes(id) ? 'bell' : id==='bass'||nodeById.get(id)?.act === 3 ? 'bass' : 'sax';
-    if (!audioBuffers.has(instrument)) audioBuffers.set(instrument, fetch(`/jolly-statechart/assets/audio/${instrument}.mp3`).then(r => { if (!r.ok) throw new Error('Audio unavailable'); return r.arrayBuffer(); }).then(data => audio.decodeAudioData(data)));
-    const buffer = await audioBuffers.get(instrument); if (!state.sound) return;
-    const source = audio.createBufferSource(), gain = audio.createGain(); source.buffer = buffer; gain.gain.value = .7; source.connect(gain); gain.connect(audio.destination); sounding.add(source);
-    source.onended = () => { sounding.delete(source); source.disconnect(); gain.disconnect(); }; source.start();
-  } catch { state.sound = false; $('#sound .sound-label').textContent = copy.ui.soundOff; $('#sound').setAttribute('aria-pressed', 'false'); }
+    await sfx.play(instrument, { gain: .7 });
+  } catch { setSound(false, false); }
 }
+const adoptDoorSound = () => { if (window.jollyDoorSound !== undefined && soundChoice === null) setSound(window.jollyDoorSound); };
+addEventListener('jolly:door-sound', adoptDoorSound);
 const SEAM_EDGES = EDGES.filter(edge => nodeById.get(edge.from).act !== nodeById.get(edge.to).act);
 const SEAM_SWEEPS = { 'sync:yoyo': {}, 'bite:sax': { x: .53, at: .56 }, 'bass:rabbit': { x: .77, at: .64 } };
 const COMPACT_SEAM_SWEEPS = { 'bite:sax': { x: .53, at: .68 }, 'bass:rabbit': { x: .82, at: .60 } };
@@ -678,7 +685,8 @@ const book = {
   next() { go(state.started ? state.index + 1 : 0); }, previous() { go(state.index - 1); }, restart() { go(0, { play: true }); },
   setSpeed(value) { if (!Number.isFinite(value) || value <= 0) throw new RangeError('Book speed must be positive.'); state.speed = value; sync(); },
 };
-$('#sound').onclick = () => { state.sound = !state.sound; $('#sound').setAttribute('aria-pressed', String(state.sound)); $('#sound .sound-label').textContent = state.sound ? copy.ui.soundOn : copy.ui.soundOff; if (state.sound) soundFor(route()[state.index]); else sounding.forEach(s => s.stop());sync(); };
+$('#sound').onclick = () => { setSound(!state.sound); if (state.sound) soundFor(route()[state.index]); else sfx.stopAll();sync(); };
+adoptDoorSound();
 $('#open-curtain').onclick=()=>go(route().indexOf('encore'),{scroll:false});
 $('#curtain-call').onclick=()=>go(route().indexOf('bow'),{scroll:false});
 for (const event of ['wheel', 'touchstart']) addEventListener(event, () => { if (state.playing) { state.playing = false; sync(); } }, { passive: true });
@@ -732,7 +740,7 @@ function allInstrumentsReady() {
   return instrumentsReady;
 }
 
-const imageSources = { cast: '/jolly-statechart/assets/cast/trio-pencil.webp', ...Object.fromEntries([1, 2, 3, 4].map(i => [`cast${i}`, `/jolly-statechart/assets/cast/action-${i}.webp`])), ...Object.fromEntries(['hotel','bell','metronome','vinyl','clock','trolley','shoe-tieclip','champagne','chandelier','microphone','do-not-disturb','rabbit-case'].map(id => [id, `/jolly-statechart/assets/generated/${id}.webp`])), looseleafTicket: 'data:image/svg+xml,' + encodeURIComponent(makeTicketSvg({ width: 300, height: 132, seed: 'yoyo-approval', stubWidth: 62 })) };
+const imageSources = { cast: '/jolly-statechart/assets/cast/trio-pencil.webp', ...Object.fromEntries([1, 2, 3, 4].map(i => [`cast${i}`, `/jolly-statechart/assets/cast/action-${i}.webp`])), ...Object.fromEntries(['hotel','bell','metronome','vinyl','clock','trolley','shoe-tieclip','champagne','chandelier','microphone','do-not-disturb','rabbit-case'].map(id => [id, `/jolly-statechart/assets/generated/${id}.webp`])), looseleafTicket: 'data:image/svg+xml,' + encodeURIComponent(makeTicketSvg({ width: 300, height: 132, seed: 'yoyo-approval', stubWidth: 62, tokens: { paper: '#e3a82b', ink: '#16246e' } })) };
 const actionIds = ['cast1', 'cast2', 'cast3', 'cast4'];
 const actionImagesReady = Promise.all(actionIds.map(id => loadImage(id, imageSources[id])));
 await Promise.all([document.fonts.ready, ...Object.entries(imageSources).filter(([id]) => !actionIds.includes(id)).map(([id, url]) => loadImage(id, url))]);
@@ -867,6 +875,8 @@ function placeAccent(host, sprite, name, left, top, width, rotation) {
   canvas.setAttribute('aria-hidden', 'true');
   canvas.dataset.prop = name;
   canvas.width = canvas.height = 256;
+  // This one gets measured right after it is painted. On the CPU that is instant; on the GPU it stalls until everything queued has finished.
+  if (name === 'dial') canvas.getContext('2d', { willReadFrequently: true });
   canvas.style.cssText = `position:absolute;left:${left};top:${top};width:${width};height:auto;transform:translate(-50%,-50%);pointer-events:none`;
   host.append(canvas);
   watchAccent(canvas, [sprite], { rotation, name });
@@ -922,6 +932,11 @@ loadFeedbackArt(['reed','fork','stitch','logo','dial','trio-0','trio-1','trio-2'
   if (!art.dial || !notice || !sides) return;
   const status = notice.querySelector('.record-music-status'), retry = notice.querySelector('.record-music-refresh');
   library.style.position = 'relative';
+  // Nothing down here can be seen from the door, and measuring the dial below stalls: it can wait until the page is on show and has a moment.
+  await new Promise(resolve => {
+    const look = () => (document.documentElement.matches('.opening-active,.opening-pending') ? setTimeout(look, 500) : (window.requestIdleCallback || setTimeout)(resolve));
+    look();
+  });
   const decoration = placeAccent(library, art.dial, 'dial', '100%', '50%', '76px', .13);
   const { width: pixelsWide, height: pixelsHigh } = decoration;
   const pixels = decoration.getContext('2d').getImageData(0, 0, pixelsWide, pixelsHigh).data;
@@ -967,7 +982,36 @@ function paintCover(time) {
     const ink=ACTOR_INK[a.who];drawBoiledSprite(g,image,[0,0,image.width,image.height],[(a.canvas.width-w)/2,a.canvas.height-h,w,h],{phase:phaseAt(time,ink.fps,hash(a.who)%5),amplitude:ink.amount});
   }
 }
-resizeCoverActors(); scenes.forEach(buildScene);interludes.forEach(resizeHouse);paintCover(0);scenes.forEach(s=>paintScene(s,0));interludes.forEach(s=>paintHouse(s,0));sync();
+// A chapter's drawing is only recorded when it is built. It gets rasterised the first time it is used, which is a long stall if that comes in the middle of a scroll.
+// So each chapter's three frames are done ahead of time as it comes within reach: one per idle moment, and never while the door is up.
+const settling = [];
+let settlingWait = 0;
+function settleNext() {
+  settlingWait = 0;
+  if (!settling.length) return;
+  if (document.hidden || document.documentElement.matches('.opening-active,.opening-pending')) { settlingWait = setTimeout(settleNext, 1000); return; }
+  settlingWait = 1;
+  (window.requestIdleCallback || (work => setTimeout(work, 120)))(() => {
+    const layer = settling.shift();
+    if (layer) { layer.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, 1, 1); layer.settled = true; }
+    settleNext();
+  }, { timeout: 2000 });
+}
+function settleScene(scene) {
+  for (const layer of scene.layers || []) if (!layer.settled && !settling.includes(layer)) settling.push(layer);
+  if (!settlingWait) settleNext();
+}
+const withinReach = new IntersectionObserver(entries => {
+  for (const entry of entries) {
+    const scene = scenes.find(item => item.plate === entry.target);
+    scene.inReach = entry.isIntersecting;
+    if (entry.isIntersecting) settleScene(scene);
+  }
+}, { rootMargin: '150% 0px' });
+scenes.forEach(scene => withinReach.observe(scene.plate));
+resizeCoverActors(); scenes.forEach(buildScene);interludes.forEach(resizeHouse);paintCover(0);
+// Only what is on screen now: the rest stay marked dirty and the frame loop paints each as it comes into view, instead of the whole page in one long task.
+scenes.forEach(s=>{const box=s.canvas.getBoundingClientRect();if(box.bottom>0&&box.top<innerHeight)paintScene(s,0)});interludes.forEach(s=>paintHouse(s,0));sync();
 coverActors.forEach(a => { a.el.querySelector('img').hidden = true; });
 mountHeadingHighlights();
 // Paint the cover cel first, then split and warm the later drawings between frames.
@@ -1028,6 +1072,6 @@ const theatreObserver = new IntersectionObserver(async entries => {
     if (theatre) { theatre.setAct(3);theatre.setProgress(['bow','side-b'].includes(route()[state.index])?1:.65); }
   } catch (error) { console.warn('The paper edition remains available:', error.message); }
 }, { rootMargin: '700px' }); theatreObserver.observe($('#paper-theatre'));
-addEventListener('pagehide', () => { musicController?.dispose();theatre?.dispose();instruments.dispose();recordPlayer?.dispose();interactiveRecordPlayer?.dispose();audio?.close();player.dispose?.();paperStock.dispose(); });
+addEventListener('pagehide', () => { musicController?.dispose();theatre?.dispose();instruments.dispose();recordPlayer?.dispose();interactiveRecordPlayer?.dispose();sfx.dispose();player.dispose?.();paperStock.dispose(); });
 // Named steps keep visual checks reproducible across the three routes.
-window.jolly = { get state() { return { ...state }; },book,get music(){return musicController},get musicState(){return musicController?.state??{status:musicError?'error':'loading',message:musicError,selectedId:null,changing:false,paused:true,currentTime:0,duration:null,src:null}},get record(){return interactiveRecordPlayer},get recordHero(){return recordPlayer},get coreReady(){return images.cast?.complete&&scenes.every(s=>!!s.layer)&&motionReady},get ready(){const ready=allInstrumentsReady();return this.coreReady&&extrasReady&&ready},get theatreReady(){return!!theatre?.ready},get stageReport(){return theatre?.diagnostics},get recordReady(){return!!recordPlayer?.ready&&!!interactiveRecordPlayer?.ready},get poseCount(){return castFrames.length},go:id=>{if(isBranch(id))state.route=id;const i=route().indexOf(id);if(i>=0)go(i)},get notes(){return copy.notes},get chapterCount(){return 9},get characterBounds(){return scenes.flatMap(s=>s.actors.flatMap(a=>castFrames.map((pose,index)=>{const base=castFrames[0][a.who],im=pose[a.who],scale=a.height/base.height,k=s.plate.getBoundingClientRect().width/s.W,cx=a.x+base.width*scale/2,left=s.plate.getBoundingClientRect().left+(cx-im.width*scale/2)*k,right=left+im.width*scale*k,canvas=s.canvas.getBoundingClientRect(),paper=$('.paper-world').getBoundingClientRect();return{who:a.who,act:s.i+1,pose:index,left,right,clipped:left<Math.max(canvas.left,paper.left)+2||right>Math.min(canvas.right,paper.right)-2}})))}};
+window.jolly = { get soundChoice() { return soundChoice; }, setNight(down) { Object.assign(C, down ? HOUSE_DOWN : HOUSE_UP); for (const group of [scenes, seams, interludes]) for (const item of group) item.dirty = true; instruments.setNight(down); }, get state() { return { ...state }; },book,get music(){return musicController},get musicState(){return musicController?.state??{status:musicError?'error':'loading',message:musicError,selectedId:null,changing:false,paused:true,currentTime:0,duration:null,src:null}},get record(){return interactiveRecordPlayer},get recordHero(){return recordPlayer},get coreReady(){return images.cast?.complete&&scenes.every(s=>!!s.layer)&&motionReady},get ready(){const ready=allInstrumentsReady();return this.coreReady&&extrasReady&&ready},get theatreReady(){return!!theatre?.ready},get stageReport(){return theatre?.diagnostics},get recordReady(){return!!recordPlayer?.ready&&!!interactiveRecordPlayer?.ready},get poseCount(){return castFrames.length},go:id=>{if(isBranch(id))state.route=id;const i=route().indexOf(id);if(i>=0)go(i)},get notes(){return copy.notes},get chapterCount(){return 9},get characterBounds(){return scenes.flatMap(s=>s.actors.flatMap(a=>castFrames.map((pose,index)=>{const base=castFrames[0][a.who],im=pose[a.who],scale=a.height/base.height,k=s.plate.getBoundingClientRect().width/s.W,cx=a.x+base.width*scale/2,left=s.plate.getBoundingClientRect().left+(cx-im.width*scale/2)*k,right=left+im.width*scale*k,canvas=s.canvas.getBoundingClientRect(),paper=$('.paper-world').getBoundingClientRect();return{who:a.who,act:s.i+1,pose:index,left,right,clipped:left<Math.max(canvas.left,paper.left)+2||right>Math.min(canvas.right,paper.right)-2}})))}};

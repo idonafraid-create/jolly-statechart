@@ -3,16 +3,16 @@ import * as THREE from 'three';
 import { inkMaterial, INK, mergeGeometries, PAPER, pencilMaterial, PI_GLSL, turnedNormals } from './opening-pencil.mjs';
 
 // Walnut boards laid across a surface in world space, so merged parts need no texture coordinates.
-export function walnutMaterial(shared) {
+export function walnutMaterial(shared, { dark = [.25, .125, .06], light = [.37, .195, .095] } = {}) {
   const material = new THREE.ShaderMaterial({
-    uniforms: { uTile: shared.uTile, uTooth: shared.uTooth, uBoil: shared.uBoil, uPixel: shared.uPixel, uLight: shared.uLight },
+    uniforms: { uTile: shared.uTile, uTooth: shared.uTooth, uBoil: shared.uBoil, uPixel: shared.uPixel, uLight: shared.uLight, uWoodDark: { value: new THREE.Vector3(...dark) }, uWoodLight: { value: new THREE.Vector3(...light) } },
     vertexShader: 'varying vec3 vW;varying vec3 vN;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: `varying vec3 vW;varying vec3 vN;uniform sampler2D uTile,uTooth;uniform vec3 uLight;uniform float uBoil,uPixel;
+    fragmentShader: `varying vec3 vW;varying vec3 vN;uniform sampler2D uTile,uTooth;uniform vec3 uLight,uWoodDark,uWoodLight;uniform float uBoil,uPixel;
       float h1(float n){return fract(sin(n*91.7)*43758.5453);}
       void main(){
         float jump=floor(uBoil);vec2 sc=gl_FragCoord.xy/uPixel;vec2 off=vec2(fract(jump*.37)*97.,fract(jump*.71)*61.);
         float row=floor(vW.y*1.9+40.),inRow=fract(vW.y*1.9+40.),tone=h1(row*3.1);
-        vec3 col=mix(vec3(.25,.125,.06),vec3(.37,.195,.095),tone);
+        vec3 col=mix(uWoodDark,uWoodLight,tone);
         col*=.66+texture2D(uTile,vec2(vW.x*.16+tone*3.,vW.y*3.4)).r*.74;
         col=mix(col,vec3(.08,.03,.015),smoothstep(.025,0.,inRow)*.8);
         col*=.72+.42*max(0.,dot(normalize(vN),uLight));
@@ -265,7 +265,7 @@ export function valance(shared, kit, stageLight) {
       group.clear(); built.forEach(mesh => mesh.geometry.dispose());
       built = [];
       // An odd count keeps a swag, not a tassel, over the XII on the clock.
-      const swags = Math.max(7, Math.round(width / .92) | 1), swagWidth = width / swags;
+      const swags = Math.max(11, (Math.round(width / .92) + 4) | 1), swagWidth = width / swags;
       const nx = swags * 28, ny = 22, positions = [], index = [];
       const surfaceZ = (x, v, { f, edge }) => {
         // Folds run from the two raised corners down through the belly of the swag.
@@ -301,7 +301,7 @@ export function valance(shared, kit, stageLight) {
       const braidGeometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(hem), nx, .022, 6, false);
       const braid = new THREE.Mesh(braidGeometry, trim); braid.frustumCulled = false; group.add(braid); built.push(braid);
       const braidInk = new THREE.Mesh(braidGeometry, ink); braidInk.frustumCulled = false; group.add(braidInk);
-      const tassel = tasselGeometry().scale(.74, .74, .74);
+      const tassel = tasselGeometry().scale(.5, .5, .5);
       const tassels = mergeGeometries(Array.from({ length: swags + 1 }, (_, i) => tassel.clone().translate(-width / 2 + i * swagWidth, -drop * .5, .05)));
       const pieces = new THREE.Mesh(tassels, trim); pieces.frustumCulled = false; group.add(pieces); built.push(pieces);
       const piecesInk = new THREE.Mesh(tassels, ink); piecesInk.frustumCulled = false; group.add(piecesInk);
@@ -314,13 +314,18 @@ export function valance(shared, kit, stageLight) {
   };
 }
 
-const DRAPE_DEFORM = `uniform float uOpen,uHalf,uTop,uDrop,uClock;uniform vec3 uPress;
+const DRAPE_DEFORM = `uniform float uStir;uniform float uOpen,uHalf,uTop,uDrop,uClock;uniform vec3 uPress;
 void deform(inout vec3 p,inout vec3 n){
   float side=p.x<0.?-1.:1.,u=clamp(abs(p.x)/uHalf,0.,1.),v=clamp((uTop-p.y)/uDrop,0.,1.);
   // Hanging cloth breathes a little, and gives way under the pointer.
-  vec2 d=p.xy-uPress.xy;float give=exp(-dot(d,d)*1.4)*uPress.z;
-  p.z+=sin(p.x*.9+uClock*.6)*sin(v*2.2+uClock*.37)*v*.035-give*.14;
-  n.xy+=d*give*.5;
+  vec2 d=p.xy-uPress.xy;float give=exp(-dot(d,d)*1.05)*uPress.z;
+  // A hand passing through stirs the whole width of the cloth, and the stir runs down it.
+  float stir=sin(p.x*2.1-uClock*5.+v*2.4)*v*uStir;
+  p.z+=sin(p.x*.9+uClock*.6)*sin(v*2.2+uClock*.37)*v*.075-give*.3+stir*.19*(1.-.4*v);
+  // The two halves stay closed at the seam however hard the cloth is pushed.
+  p.x+=(d.x*give*.11+stir*.05)*smoothstep(.02,.7,abs(p.x));
+  n.xy+=d*give*.85;
+  n.x+=cos(p.x*2.1-uClock*5.+v*2.4)*v*uStir*.5;
   // The inner edge leads, so the two halves sweep up and away into the corners behind the valance.
   float t=clamp(uOpen*(1.24-.24*u),0.,1.),e=t*t*(3.-2.*t);
   p.x=side*mix(abs(p.x),uHalf*1.06,e*(.98-.3*v*(1.-e)));
@@ -335,7 +340,7 @@ void deform(inout vec3 p,inout vec3 n){
 export function stageDrape(shared, kit, stageLight) {
   const group = new THREE.Group(), disposables = [];
   const keep = thing => { disposables.push(thing); return thing; };
-  const uniforms = { uOpen: { value: 0 }, uHalf: { value: 4 }, uTop: { value: 3 }, uDrop: { value: 6 }, uClock: { value: 0 }, uPress: { value: new THREE.Vector3(0, 0, 0) } };
+  const uniforms = { uOpen: { value: 0 }, uHalf: { value: 4 }, uTop: { value: 3 }, uDrop: { value: 6 }, uClock: { value: 0 }, uPress: { value: new THREE.Vector3(0, 0, 0) }, uStir: { value: 0 } };
   const cloth = keep(pencilMaterial(shared, kit.matcap.cloth, { hatch: .16, hatchColor: '#5a1228', rim: 0, fleck: .18, grain: .75, deformChunk: DRAPE_DEFORM, extraUniforms: uniforms, stageLight }));
   const trim = keep(pencilMaterial(shared, kit.matcap.brass, { hatch: .25, hatchColor: '#4a2a0f', rim: 0, fleck: .2, tint: '#ffe39a', deformChunk: DRAPE_DEFORM, extraUniforms: uniforms, stageLight }));
   const ink = keep(inkMaterial(shared, .008, { deformChunk: DRAPE_DEFORM }));
@@ -405,7 +410,7 @@ export function stageDrape(shared, kit, stageLight) {
   };
 }
 
-// Desk top: plank wood, a hatched shadow that leans away from the light, a ripple when the bell strikes.
+// Desk top: cherry boards, a hatched shadow that leans away from the light, a ripple when the bell strikes.
 export function deskTop(shared) {
   const uniforms = { ...shared, uRipple: { value: 0 }, uRippleAlpha: { value: 0 }, uFront: { value: 1.8 }, uBack: { value: -1.2 }, uLamp: { value: new THREE.Vector3(9, 0, 0) } };
   const material = new THREE.ShaderMaterial({
@@ -418,20 +423,20 @@ export function deskTop(shared) {
         float row=floor(vW.z*2.3+40.),inRow=fract(vW.z*2.3+40.);
         float joint=floor((vW.x+h1(row)*9.)*.46);
         float tone=h1(row*3.1+joint*7.7);
-        vec3 col=mix(vec3(.62,.35,.15),vec3(.76,.47,.21),tone);
+        vec3 col=mix(vec3(.45,.15,.1),vec3(.58,.21,.13),tone);
         float grain=texture2D(uTile,vec2(vW.x*.22+tone*3.+joint*.31,vW.z*2.6)).r;
         col*=.74+grain*.5;
-        float seam=smoothstep(.03,.0,inRow)+smoothstep(.97,1.,inRow)+smoothstep(.012,.0,abs(fract((vW.x+h1(row)*9.)*.46)-.5)-.488)*0.;
-        col=mix(col,vec3(.27,.13,.06),clamp(seam,0.,1.)*.8);
+        float seam=smoothstep(.03,.0,inRow)+smoothstep(.97,1.,inRow);
+        col=mix(col,vec3(.18,.05,.04),clamp(seam,0.,1.)*.8);
         float tooth=texture2D(uTooth,(sc+off)/170.).r;
-        col=mix(col,vec3(1.,.9,.72),smoothstep(.68,.86,tooth)*.24);
+        col=mix(col,vec3(1.,.9,.72),smoothstep(.68,.86,tooth)*.16);
         // Hatched contact shadow leaning away from the pointer's light.
         vec2 sq=(vW.xz-vec2(-uLight.x*.3,-.06))/vec2(1.68,1.52);
         float d=length(sq);
         float wob=(texture2D(uTooth,(sc+off)/900.).r-.5)*.5;
         float hatch=smoothstep(-.1,.5,sin((sc.x+sc.y*1.4)/2.7+wob*5.+j*1.7));
         float body=smoothstep(1.08,.86,d+wob*.12);
-        col=mix(col,vec3(.13,.09,.2),body*(.28+.5*hatch));
+        col=mix(col,vec3(.13,.04,.12),body*(.28+.5*hatch));
         float halo=smoothstep(1.,1.35,d)*smoothstep(1.9,1.35,d);
         col*=1.+halo*.05;
         float ring=exp(-pow((length(vW.xz*vec2(1.,1.))-uRipple)*7.,2.));
@@ -449,12 +454,13 @@ export function deskTop(shared) {
   return { mesh, uniforms, dispose() { mesh.geometry.dispose(); material.dispose(); } };
 }
 
-// Desk front: walnut relief panels in real depth, a brass rail, and a plain brass plate for the two actions.
+// Desk front: cherry relief panels in real depth, the edge of the top in the same wood, and a plain brass plate for the two actions.
 export function deskFront(shared, kit) {
   const group = new THREE.Group(), disposables = [];
   const keep = thing => { disposables.push(thing); return thing; };
-  const walnut = keep(walnutMaterial(shared));
-  const plate = keep(pencilMaterial(shared, kit.matcap.cream, { hatch: .05, hatchColor: '#7a4d18', rim: 0, fleck: .16, grain: .7, tint: '#d8c27a' }));
+  const walnut = keep(walnutMaterial(shared, { dark: [.3, .09, .06], light: [.42, .14, .09] }));
+  const edge = keep(walnutMaterial(shared, { dark: [.46, .16, .1], light: [.6, .22, .14] }));
+  const plate = keep(pencilMaterial(shared, kit.matcap.cream, { hatch: .05, hatchColor: '#7a4d18', rim: 0, fleck: .12, grain: .6, tint: '#e6d09a' }));
   const cobalt = keep(pencilMaterial(shared, kit.matcap.cobalt, { hatch: .3, hatchColor: '#0d1548', rim: 0, fleck: .42 }));
   const brass = keep(pencilMaterial(shared, kit.matcap.brass, { hatch: .4, hatchColor: '#4a2a0f', rim: 0, fleck: .26, tint: '#ffe39a' }));
   const gold = keep(pencilMaterial(shared, kit.matcap.cream, { hatch: .08, hatchColor: '#7a4d18', rim: 0, fleck: .3, tint: '#efb63e' }));
@@ -488,9 +494,9 @@ export function deskFront(shared, kit) {
       built.forEach(mesh => { group.remove(mesh); mesh.geometry.dispose(); });
       built = []; batches = new Map();
       box(0, -height * .6, width * 1.5, height * 1.2, .02, -.02, walnut);
-      // Brass rail and two inlay stripes along the top.
+      // The thickness of the top, in the same cherry, and two inlay stripes below it.
       const rail = new THREE.CylinderGeometry(.052, .052, width * 1.5, 16); rail.rotateZ(Math.PI / 2); rail.translate(0, -.012, .06);
-      const railMesh = new THREE.Mesh(rail, brass); railMesh.frustumCulled = false; group.add(railMesh); built.push(railMesh);
+      const railMesh = new THREE.Mesh(rail, edge); railMesh.frustumCulled = false; group.add(railMesh); built.push(railMesh);
       const railLine = new THREE.Mesh(rail, railInk); railLine.frustumCulled = false; group.add(railLine);
       box(0, -.092, width * 1.5, .026, .008, 0, cobalt);
       box(0, -.128, width * 1.5, .009, .006, 0, brass);
@@ -538,6 +544,8 @@ export function deskFront(shared, kit) {
       for (const [material, list] of batches) {
         const mesh = new THREE.Mesh(mergeGeometries(list), material); mesh.frustumCulled = false; group.add(mesh); built.push(mesh);
       }
+      // The inside of the engraved line, so the page can lay its words on the plate exactly.
+      return { halfWidth: pw - .078, top: top - .05, bottom: bottom + .063 };
     },
     dispose() {
       built.forEach(mesh => mesh.geometry.dispose());

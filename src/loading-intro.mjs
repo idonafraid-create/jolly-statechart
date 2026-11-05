@@ -47,6 +47,7 @@ if (root.classList.contains('opening-pending')) {
   });
 }
 coverFrame();
+import('./after-hours.mjs');
 if (location.hash) enter('deep-link');
 else if (reduced) enter('reduced-motion');
 else if (new URL(location.href).searchParams.get('entrance') === 'off') enter('disabled');

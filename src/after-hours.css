@@ -1,0 +1,139 @@
+/* After Hours. By day the sheet lies on a rug in the sun through the blinds; at night it is a notice board on a wall, between two lamps. */
+
+/* What the sheet lies on. It stays put as you scroll, so the sheet slides over it. */
+html[data-house] body{background:#0a1f15;padding-top:clamp(22px,6vh,70px)}
+html[data-house] body::before{content:"";position:fixed;inset:0;z-index:-3;background:var(--day-shade),var(--day-tile) 0 0/var(--day-size)}
+html[data-house] body::after{content:"";position:fixed;inset:0;z-index:-3;pointer-events:none}
+html[data-house]{--day-tile:url(/jolly-statechart/assets/after-hours/day-rug.webp);--day-size:760px;--day-shade:linear-gradient(rgba(2,12,8,.42),rgba(2,12,8,.42))}
+html[data-house=up] body::after{background:linear-gradient(90deg,rgba(4,12,8,.5),rgba(4,12,8,0) 26%,rgba(4,12,8,0) 74%,rgba(4,12,8,.5))}
+html[data-house] .paper-world{position:relative;box-shadow:0 2px 3px rgba(10,4,1,.55),0 18px 34px rgba(10,4,1,.5),0 44px 90px rgba(10,4,1,.55)}
+
+/* Day: a sheet of paper held down on the rug by two brass clips. */
+.ah-clip{position:absolute;z-index:6;top:clamp(0px,calc(6vh - 56px),30px);width:clamp(84px,6.6vw,112px);pointer-events:none;filter:drop-shadow(0 7px 5px rgba(20,8,2,.5))}
+html[data-house=down] .ah-clip{display:none}
+
+/* The light in the room. Levels are set from after-hours-lights.mjs; each layer is painted once and then only changes opacity. */
+.ah-room{position:fixed;inset:0;pointer-events:none;overflow:hidden;contain:strict}
+.ah-room-back{z-index:-2}.ah-room-front{z-index:24}
+.ah-room>*{position:absolute;display:none;will-change:opacity}
+@media(max-width:720px){.ah-room{display:none}}
+/* Sun through the blinds (scripts/build-blinds.py): lit stripes of the rug behind the sheet, and the same stripes as a very faint shade across it. */
+html[data-house=up] .ah-sun,html[data-house=up] .ah-blinds{display:block}
+.ah-sun{inset:0;background:linear-gradient(#4a4a2a,#4a4a2a),var(--day-tile) 0 0/var(--day-size);background-blend-mode:color-dodge,normal;-webkit-mask:url(/jolly-statechart/assets/after-hours/blinds-light.webp) 0 0/100% 100% no-repeat;mask:url(/jolly-statechart/assets/after-hours/blinds-light.webp) 0 0/100% 100% no-repeat}
+.ah-blinds{inset:0;background:url(/jolly-statechart/assets/after-hours/blinds-shade.webp) 0 0/100% 100% no-repeat}
+.ah-sun,.ah-blinds{will-change:auto}
+/* A cat's prints dyed into the pile, from after-hours-paws.mjs. They lie over the sun layer, with its stripes already painted into them. */
+.ah-paws{position:absolute;inset:0;display:none;overflow:hidden;will-change:auto}
+.ah-paw{position:absolute;left:0;top:0;pointer-events:none}
+.ah-paw canvas{position:absolute;left:0;top:0;display:block}
+@media(min-width:1720px){html[data-house=up] .ah-paws{display:block}}
+/* Night: wall lamps on old wiring. Each lights a ring of wall around itself and nothing further. */
+.ah-lamp{--g:var(--gl);top:0;height:100%;width:var(--g);background:var(--wall-lit);background-blend-mode:var(--wall-blend);--lamp-y:calc(clamp(96px,19vh,240px) + 20px + var(--g) * .2);-webkit-mask-image:radial-gradient(ellipse calc(var(--g) * .54) calc(var(--g) * .64) at 50% var(--lamp-y),#000,rgba(0,0,0,.56) 30%,rgba(0,0,0,.17) 66%,transparent);mask-image:radial-gradient(ellipse calc(var(--g) * .54) calc(var(--g) * .64) at 50% var(--lamp-y),#000,rgba(0,0,0,.56) 30%,rgba(0,0,0,.17) 66%,transparent)}
+.ah-lamp.left{left:0}
+.ah-lamp.right{right:0;--g:var(--gr);background-position:calc(var(--g) - var(--cw)) 0,calc(var(--g) - var(--cw)) 0}
+/* Woodwork: a dado along the bottom and a cornice along the top. */
+.ah-wainscot{left:0;right:0;bottom:0;height:24vh;background:linear-gradient(90deg,rgba(0,0,0,0) 0 16px,rgba(0,0,0,.5) 16px 18px,rgba(255,200,130,.05) 18px 19px,rgba(0,0,0,0) 19px 142px,rgba(255,200,130,.05) 142px 143px,rgba(0,0,0,.5) 143px 145px,rgba(0,0,0,0) 145px 160px) 0 0/160px 100%,linear-gradient(rgba(6,3,1,.8),rgba(3,1,1,.92)),url(/jolly-statechart/assets/after-hours/walnut-v.webp) 0 0/820px;box-shadow:0 -1px 0 #7d5717,0 -5px 0 #1c0e06,0 -6px 0 #54391a,0 -10px 14px rgba(0,0,0,.6);will-change:auto}
+.ah-cornice{left:0;right:0;top:0;height:clamp(10px,2.4vh,20px);background:linear-gradient(rgba(8,3,2,.68),rgba(8,3,2,.84)),url(/jolly-statechart/assets/after-hours/walnut.webp) 0 0/820px;box-shadow:0 1px 0 #64461a,0 6px 12px rgba(0,0,0,.55);will-change:auto}
+html[data-house=down] .ah-wainscot,html[data-house=down] .ah-cornice{display:block}
+/* On a screen wide enough, you can see what the light is coming from. */
+.ah-sconce{z-index:2;top:calc(clamp(96px,19vh,240px) + 20px);width:clamp(73px,calc(var(--g) * .3825),134px);will-change:auto;filter:drop-shadow(0 8px 8px rgba(0,0,0,.6))}
+.ah-sconce.left{--g:var(--gl);left:calc(var(--g) / 2 - clamp(36.5px,calc(var(--g) * .19125),67px))}
+.ah-sconce.right{--g:var(--gr);right:calc(var(--g) / 2 - clamp(36.5px,calc(var(--g) * .19125),67px))}
+.ah-sconce img{display:block;width:100%;height:auto;filter:brightness(.3) saturate(.7)}
+.ah-sconce .ah-sconce-lit{position:absolute;left:0;top:0;filter:brightness(1.12);will-change:opacity}
+.ah-bloom{position:absolute;left:-55%;right:-55%;top:-38%;bottom:-16%;background:radial-gradient(closest-side,rgba(255,226,170,.72),rgba(255,190,110,.26) 38%,rgba(255,170,80,.06) 72%,rgba(255,170,80,0));will-change:opacity}
+@media(min-width:1720px){html[data-house=down] .ah-sconce,html[data-house=down] .ah-lamp{display:block}}
+
+/* Night: the house lights go down and the sheet turns into a lobby notice board. */
+html[data-house=down]{color-scheme:dark;--paper:#0d1444;--ink:#efe6d0;--dark:#f2d48a;--muted:#bcb196;--coral:#f08a90;--green:#b7d66a;--lime:#c9e85a;--wine:#ffb3bf;--coral-text:#f7a6ac}
+html[data-house=down] body{background:#0a0503}
+/* The wall: dark wine regency stripes with a hair of gold. The same pattern twice, in shadow and as it looks where a lamp reaches it. */
+html[data-house=down]{--wall-blend:soft-light,normal;--wall-dark:url(/jolly-statechart/assets/after-hours/felt.webp) 0 0/520px,linear-gradient(90deg,#14070b 0 45px,#352610 45px 46px,#0d0508 46px 91px,#352610 91px 92px) 0 0/92px 100%;--wall-lit:url(/jolly-statechart/assets/after-hours/felt.webp) 0 0/520px,linear-gradient(90deg,#561a29 0 45px,#b58f4c 45px 46px,#3c111c 46px 91px,#b58f4c 91px 92px) 0 0/92px 100%}
+html[data-house=down] body::before{background:var(--wall-dark);background-blend-mode:var(--wall-blend)}
+html[data-house=down] body::after{background:linear-gradient(rgba(3,1,1,.3),rgba(3,1,1,0) 30%,rgba(3,1,1,.5))}
+/* The line of type sits a little low of centre, the same by day and by night. */
+html[data-house] .masthead{padding-top:21px}
+html[data-house=down] .paper-world,html[data-house=down] #score-dialog{background-color:transparent}
+html[data-house=down] .paper-stock-rules{display:none}
+.ah-felt,.ah-frame,.ah-corner{display:none}
+html[data-house=down] .ah-felt{display:block;position:sticky;top:0;height:100vh;margin-bottom:-100vh;z-index:-1;background:var(--felt,#0d1444) url(/jolly-statechart/assets/after-hours/felt.webp) 0 0/640px;background-blend-mode:soft-light;transition:background-color .5s steps(8)}
+html[data-house=down] .ah-felt::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 74% 66% at 50% 40%,rgba(255,226,170,.07),rgba(3,1,8,.46))}
+html[data-house=down] .ah-frame{display:block;position:absolute;inset:0;z-index:5;pointer-events:none;background:linear-gradient(#e9c873,#a9761f 55%,#5e3e0c) top/100% 7px no-repeat,linear-gradient(0deg,#e9c873,#a9761f 55%,#5e3e0c) bottom/100% 7px no-repeat,linear-gradient(90deg,#e9c873,#a9761f 55%,#5e3e0c) left/7px 100% no-repeat,linear-gradient(270deg,#e9c873,#a9761f 55%,#5e3e0c) right/7px 100% no-repeat}
+html[data-house=down] .ah-frame::after{content:"";position:absolute;inset:7px;box-shadow:inset 0 0 0 1px rgba(10,4,1,.9),inset 0 3px 8px rgba(0,0,0,.55),inset 0 0 70px rgba(2,1,6,.42)}
+html[data-house=down] .ah-corner{display:block;position:absolute;z-index:6;width:clamp(64px,6.4vw,108px);pointer-events:none;filter:drop-shadow(0 4px 5px rgba(0,0,0,.55))}
+.ah-corner.tl{left:-1px;top:-1px}.ah-corner.tr{right:-1px;top:-1px;transform:scaleX(-1)}.ah-corner.bl{left:-1px;bottom:-1px;transform:scaleY(-1)}.ah-corner.br{right:-1px;bottom:-1px;transform:scale(-1)}
+
+/* Type: brass for what is set large, cream for what is read. */
+html[data-house=down] h1,html[data-house=down] #act-1.chapter h2,html[data-house=down] .theatre-heading h2,html[data-house=down] .instrument-saxophone .instrument-title,html[data-house=down] .record-player .record-title,html[data-house=down] .vinyl-crate .vinyl-crate-title,html[data-house=down] #score-title{color:#f2d48a;text-shadow:0 2px 0 rgba(4,2,10,.6)}
+html[data-house=down] #act-1{--act-accent:#f2d48a;--act-ink:#f2d48a}
+html[data-house=down] #act-2{--act-accent:#f08a90;--act-ink:#f7a6ac}
+html[data-house=down] #act-3{--act-accent:#c9e85a;--act-ink:#d3ec79}
+html[data-house=down] #act-4{--act-accent:#ff7fb4;--act-ink:#ffb3cf}
+html[data-house=down] .note-jojo{color:#f7a6ac}
+html[data-house=down] .note-lyly{color:#d3ec79}
+html[data-house=down] .chapter-index-note i{color:#f7a6ac}
+html[data-house=down] .wordmark-ll{color:#b7d66a}
+html[data-house=down] .wordmark-y{color:#ffb3bf}
+html[data-house=down] .theatre-cues [aria-current=step],html[data-house=down] .instrument-control[aria-current=step]{color:#ffb3bf}
+html[data-house=down] .start-button{--ink:#2a1608;color:#2a1608;border-color:#2a1608;background:linear-gradient(#fbe7a8,#dcaa44 42%,#a9741f 72%,#e8c264);box-shadow:2px 3px 0 rgba(4,2,10,.6)}
+html[data-house=down] .start-button:hover{background:linear-gradient(#fdeeba,#e6b954 42%,#b98326 72%,#efcd76)}
+html[data-house=down] .cover-runtime,html[data-house=down] .cover-runtime *{color:#d3c9ae;opacity:1}
+html[data-house=down] .heading-highlights{filter:saturate(1.5) brightness(1.22)}
+html[data-house=down] .theatre-cues button,html[data-house=down] .theatre-cues button *{color:#efe6d0;border-bottom-color:rgba(242,212,138,.4)}
+html[data-house=down] .record-player,html[data-house=down] .record-player p,html[data-house=down] .vinyl-crate{color:#efe6d0}
+
+/* The instruments' room and the listening desk: their type was set for paper, so it all comes up here. */
+html[data-house=down] .instrument-collection{color:#e6dfca}
+html[data-house=down] .instrument-collection>.instrument-intro,html[data-house=down] .instrument-caption{border-color:rgba(242,212,138,.25)}
+html[data-house=down] .instrument-saxophone{--instrument-accent:#f2d48a !important}
+html[data-house=down] .instrument-double-bass{--instrument-accent:#c9e85a !important}
+html[data-house=down] .instrument-rabbit-guitar{--instrument-accent:#ffb3cf !important}
+html[data-house=down] .instrument-saxophone .instrument-caption>em{color:#f7a6ac}
+html[data-house=down] .instrument-control,html[data-house=down] .instrument-control:hover{color:#2a1608;border-color:#6b4a14;box-shadow:2px 3px 0 rgba(4,2,10,.6);background:linear-gradient(#fbe7a8,#dcaa44 42%,#a9741f 72%,#e8c264)}
+html[data-house=down] .instrument-control:hover{background:linear-gradient(#fdeeba,#e6b954 42%,#b98326 72%,#efcd76)}
+html[data-house=down] #record-finale .record-turn{color:#2a1608;border-color:#6b4a14;background:linear-gradient(#fbe7a8,#dcaa44 42%,#a9741f 72%,#e8c264);box-shadow:2px 3px 0 rgba(4,2,10,.6)}
+html[data-house=down] #record-workbench-title{color:#f2d48a;text-shadow:0 2px 0 rgba(4,2,10,.6)}
+html[data-house=down] .record-workbench-heading p,html[data-house=down] .record-workbench .record-music-status{color:#d8cfb6}
+html[data-house=down] .record-music-sides button{color:#efe6d0;border-color:rgba(242,212,138,.35)}
+html[data-house=down] .paper-player,html[data-house=down] .vinyl-crate{--ll-ink:#efe6d0;--ll-ink-you:#efe6d0;--ll-pencil:#bdb39a;--ll-photo:#2a1a12}
+html[data-house=down] .paper-player .paper-player-title,html[data-house=down] .paper-player .paper-player-button-label{color:#efe6d0}
+html[data-house=down] .paper-player .paper-player-subtitle,html[data-house=down] .paper-player .paper-player-tools,html[data-house=down] .paper-player .paper-player-tools span,html[data-house=down] .paper-player [id=count],html[data-house=down] .paper-player .paper-player-times span{color:#cfc5ac}
+html[data-house=down] .vinyl-crate .vinyl-crate-status{color:#f7a6ac}
+html[data-house=down] .vinyl-crate .vinyl-crate-genre,html[data-house=down] .vinyl-crate .vinyl-crate-item:not(.is-selected) .vinyl-crate-status,html[data-house=down] .colophon p>span,html[data-house=down] .colophon small{color:#bdb39a}
+
+/* Pencil drawings were made on paper: the dark lines need light behind them, as a performer does. */
+html[data-house=down] .cover-art{position:relative}
+html[data-house=down] .cover-art::before{content:"";position:absolute;inset:-4% -8% 2%;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 58% 56% at 50% 56%,rgba(255,176,96,.24),rgba(255,176,96,.08) 58%,rgba(255,176,96,0) 76%)}
+
+/* The switch: a cord from the ceiling, hanging in the gap in the masthead. */
+.ah-switch{padding:0;border:0;background:none;cursor:pointer;view-transition-name:ah-switch}
+.ah-switch:focus-visible{outline:2px dashed #f2d48a;outline-offset:4px}
+.ah-switch{position:fixed;z-index:30;left:var(--pull-x,50%);top:0;width:44px;margin-left:-22px;height:var(--pull-drop,calc(clamp(22px,6vh,70px) + 40px));transform-origin:50% 0;transition:height .28s cubic-bezier(.3,.7,.3,1)}
+.ah-switch.drawn-up{height:48px}
+.ah-chain{position:absolute;left:50%;top:-30px;bottom:32px;width:6px;margin-left:-3px;background:radial-gradient(circle at 38% 34%,#fff1c4 0,#e0ae4a 38%,#7a5316 72%,rgba(0,0,0,0) 76%) 0 0/6px 8px repeat-y;filter:drop-shadow(0 2px 2px rgba(10,4,1,.5))}
+.ah-pull-star{position:absolute;left:50%;bottom:0;width:38px;height:auto;margin-left:-19px;transform-origin:50% 0;transition:transform .2s;filter:drop-shadow(0 0 5px rgba(255,216,130,.95)) drop-shadow(0 0 14px rgba(255,184,84,.7))}
+.ah-switch:hover .ah-pull-star{transform:rotate(5deg)}
+.ah-switch.tug{animation:ah-tug .62s cubic-bezier(.3,.7,.3,1)}
+.ah-switch.sway{animation:ah-sway 1.5s ease-in-out}
+@keyframes ah-tug{0%{transform:translateY(0) rotate(0)}18%{transform:translateY(20px) rotate(0)}38%{transform:translateY(-4px) rotate(2deg)}58%{transform:translateY(2px) rotate(-1.6deg)}78%{transform:translateY(0) rotate(.8deg)}100%{transform:none}}
+@keyframes ah-sway{0%{transform:none}16%{transform:rotate(4deg)}38%{transform:rotate(-3.2deg)}60%{transform:rotate(2deg)}80%{transform:rotate(-1deg)}100%{transform:none}}
+@media(max-width:720px){.ah-clip{display:none}.ah-pull-star{width:26px;margin-left:-13px}html[data-house] body{padding-top:0}}
+@media(prefers-reduced-motion:reduce){.ah-switch.tug,.ah-switch.sway{animation:none}}
+
+/* The change of lights. The old page is held still and the new one is revealed by whichever version is on trial. */
+html[data-house]::view-transition-old(root),html[data-house]::view-transition-new(root){animation:none;mix-blend-mode:normal}
+html[data-house]::view-transition-new(root){z-index:2}
+html[data-house]::view-transition-group(ah-switch),html[data-house]::view-transition-new(ah-switch),html[data-house]::view-transition-group(ah-change),html[data-house]::view-transition-new(ah-change){animation:none}
+html[data-house]::view-transition-old(ah-switch){display:none}
+.ah-change{position:fixed;left:0;top:0;width:100%;height:100%;z-index:31;pointer-events:none;display:none}
+.ah-change.on{display:block;view-transition-name:ah-change}
+/* Her body is the opening. Each lean is a layer of its own; all but the current one are size zero. */
+html.ah-change-cat::view-transition-new(root){-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:0 0;mask-size:0 0;-webkit-mask-composite:source-over;mask-composite:add}
+html.ah-change-cat.ah-to-night::view-transition-new(root){-webkit-mask-image:url(/jolly-statechart/assets/after-hours/cat-mask-l0.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l1.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l2.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l3.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l4.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l5.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l6.webp);mask-image:url(/jolly-statechart/assets/after-hours/cat-mask-l0.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l1.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l2.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l3.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l4.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l5.webp),url(/jolly-statechart/assets/after-hours/cat-mask-l6.webp)}
+html.ah-change-cat.ah-to-day::view-transition-new(root){-webkit-mask-image:url(/jolly-statechart/assets/after-hours/cat-mask-r0.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r1.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r2.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r3.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r4.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r5.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r6.webp);mask-image:url(/jolly-statechart/assets/after-hours/cat-mask-r0.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r1.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r2.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r3.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r4.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r5.webp),url(/jolly-statechart/assets/after-hours/cat-mask-r6.webp)}
+
+/* The door's first frame comes before all of this: the curtain has to be up before the page knows it is in a room. */
+html.opening-pending body{background:#82213a}
+html.opening-pending body::before{z-index:999;background:var(--opening-cloth);background-blend-mode:normal}
+/* The cord is out of reach, by mouse and by keyboard, while the door stands in front of it, and in the room as soon as the star opens. */
+html.opening-pending .ah-switch,html.opening-active:not(.opening-leaving) .ah-switch{visibility:hidden}

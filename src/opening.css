@@ -1,7 +1,7 @@
 html.opening-active,html.opening-active body{overflow:hidden}
 .opening{position:fixed;inset:0;z-index:1000;overflow:hidden;background:var(--opening-cloth);color:#16246e;touch-action:pan-y;font-family:"Special Elite",serif;-webkit-tap-highlight-color:transparent}
-.opening-plaque{position:absolute;left:50%;top:var(--desk-top,78vh);bottom:0;width:min(var(--desk-plaque,62vw),100vw);transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(2px,1vh,10px);padding:clamp(14px,2.6vh,26px) 12px clamp(14px,3.2vh,34px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .26s .08s}
-.opening[data-phase="ready"] .opening-plaque{opacity:1;visibility:visible;pointer-events:auto}
+.opening-plaque{--plate-ink:#35190a;--plate-catch:rgba(255,240,205,.62);--pu:1px;position:absolute;left:0;top:0;width:60vw;height:15vh;transform-origin:0 0;display:grid;grid-template-columns:calc(var(--pu) * 590) calc(var(--pu) * 110);align-content:center;justify-content:center;row-gap:calc(var(--pu) * 9);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .26s .08s}
+.opening[data-phase="ready"] .opening-plaque{opacity:1;visibility:visible;pointer-events:auto;will-change:transform}
 .opening:not([data-phase="ready"]) .opening-bell-hit{visibility:hidden}
 /* The curtain: the 3D cloth fades in over its CSS twin, and a stage's worth of dark falls away when it rises.
    Nothing here animates in CSS: a smooth loop on the old paper sign kept the compositor busy every frame,
@@ -20,19 +20,28 @@ html.opening-active,html.opening-active body{overflow:hidden}
 .opening-call-skip{min-height:32px;display:inline-flex;align-items:center;padding:2px 8px;color:#f2d48a;font:400 11px/1 "Courier Prime",monospace;letter-spacing:.14em;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .opening-call-skip:hover{color:#fff1c4}
 .opening-call-skip:focus-visible{outline:2px dashed #f2d48a;outline-offset:1px}
-.opening-plate{display:flex;align-items:baseline;justify-content:center;gap:14px;margin:0;font:400 clamp(11px,1.4vh,13px)/1.2 "Courier Prime",monospace;letter-spacing:.22em;white-space:nowrap}
-.opening-wordmark{font:400 clamp(24px,3.7vh,34px)/1 "Special Elite",serif;letter-spacing:.04em;color:#16246e}
-.opening-wordmark i{font-style:normal}.opening-wordmark .jo{color:#a31d3a}.opening-wordmark .ll{color:#1f4a1a}.opening-wordmark .y{color:#5f1230}
-.opening-dept{color:#16246e;transition:color .2s}.opening-dept[data-who]:not([data-who=""]){font-style:italic;font-size:1.25em;letter-spacing:.08em}
-.opening-actions{display:flex;justify-content:center;align-items:center;gap:6px clamp(12px,3vw,46px);flex-wrap:wrap}
-.opening-action{position:relative;display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:2px 8px;border:0;background:transparent;color:#16246e;font:inherit;font-size:clamp(18px,2.9vh,26px);line-height:1.1;white-space:nowrap;text-decoration:none;cursor:pointer}
-.opening-action.enter{color:#1f4a1a}
-.opening-action img{width:clamp(44px,7.4vh,68px);height:clamp(44px,7.4vh,68px);object-fit:contain;pointer-events:none;transition:transform .22s cubic-bezier(.3,1.6,.5,1)}
+.opening-plate{grid-area:1/1;display:flex;align-items:center;gap:calc(var(--pu) * 12);min-width:0;margin:0;font:400 max(8.5px,calc(var(--pu) * 11.5))/1.2 "Courier Prime",monospace;letter-spacing:.2em;white-space:nowrap;color:var(--plate-ink);text-shadow:0 1px 0 var(--plate-catch)}
+.opening-plate::after{content:"";flex:1;min-width:8px;height:1px;background:rgba(53,25,10,.6);box-shadow:0 1px 0 var(--plate-catch)}
+.opening-wordmark{font:400 calc(var(--pu) * 25)/1 "Special Elite",serif;letter-spacing:.05em;color:var(--plate-ink)}
+.opening-wordmark i{font-style:normal}
+.opening-dept{color:var(--plate-ink);transition:color .2s}.opening-dept[data-who]:not([data-who=""]){font-style:italic;font-size:1.25em;letter-spacing:.08em}
+.opening-actions{grid-area:2/1/auto/3;display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--pu) * 14)}
+/* Enamel set into the brass, as on the sign: cobalt and green, the two rings of the bell's base. */
+.opening-action{--enamel-a:#2a3fd2;--enamel-b:#141f8c;position:relative;display:flex;align-items:center;justify-content:center;gap:calc(var(--pu) * 11);min-width:0;min-height:max(44px,calc(var(--pu) * 60));padding:2px calc(var(--pu) * 14);border:0;border-radius:999px;background:linear-gradient(var(--enamel-a),var(--enamel-b));box-shadow:0 0 0 2px #7a5316,0 0 0 3px rgba(40,18,6,.75),0 2px 0 3px var(--plate-catch),inset 0 2px 2px rgba(255,255,255,.3),inset 0 -4px 7px rgba(0,0,0,.34);color:#f8df9e;font:inherit;font-size:calc(var(--pu) * 22.5);line-height:1.1;letter-spacing:.02em;white-space:nowrap;text-decoration:none;text-shadow:0 1px 1px rgba(0,0,0,.6);cursor:pointer;transition:filter .15s}
+.opening-action.enter{--enamel-a:#1f7a4d;--enamel-b:#0e4a2d}
+/* The paper's flecks showing through, as on the panels beside it: the same texture at the same scale, jumping on the same beat (data-boil is set with the scene's own frame). */
+.opening-action::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--flecks,none) 0 0/170px 170px;pointer-events:none}
+.opening-plaque[data-boil="1"] .opening-action::before{background-position:-43.3px -35.9px}
+.opening-plaque[data-boil="2"] .opening-action::before{background-position:-25.6px -71.8px}
+.opening-action:hover,.opening-action:focus-visible{filter:brightness(1.14)}
+.opening-action:active{filter:brightness(.92)}
+.opening-action img{position:relative;flex:none;width:calc(var(--pu) * 45);height:calc(var(--pu) * 45);object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45));transition:transform .22s cubic-bezier(.3,1.6,.5,1)}
 .opening-action:hover img,.opening-action:focus-visible img{transform:rotate(-6deg) scale(1.1)}
-.opening-action:focus-visible{outline:2px dashed #5f1230;outline-offset:2px}
-.opening-action .heading-highlights{opacity:.75;clip-path:inset(0 100% 0 0);transition:clip-path .16s ease-out}
-.opening-action:hover .heading-highlights,.opening-action:focus-visible .heading-highlights{clip-path:inset(0 76% 0 0)}
-.opening-action[data-swiped] .heading-highlights{clip-path:inset(0 0 0 0)}
+.opening-action:focus-visible{outline:2px dashed #f8df9e;outline-offset:3px}
+/* Special Elite's capitals sit .14em above the middle of their line box, measured. */
+.opening-action .heading-highlight-host{top:.14em}
+.opening-action .heading-highlights{opacity:.72;clip-path:inset(-40% 106% -40% -6%);transition:clip-path .16s ease-out}
+.opening-action:hover .heading-highlights,.opening-action:focus-visible .heading-highlights,.opening-action[data-swiped] .heading-highlights{clip-path:inset(-40% -6% -40% -6%)}
 .opening-bell-hit{position:absolute;left:var(--bell-x,50%);top:var(--bell-top,20vh);width:var(--bell-width,40vw);height:var(--bell-height,50vh);transform:translateX(-50%);margin:0;padding:0;border:0;border-radius:50%;background:transparent;pointer-events:none}
 .opening-bell-hit:focus-visible{outline:3px dashed #f6f1e6;outline-offset:6px}
 .opening-film{position:absolute;inset:0;z-index:3;background:#e4676f;visibility:hidden}
@@ -41,7 +50,8 @@ html.opening-active,html.opening-active body{overflow:hidden}
 .opening-star-bands{z-index:2}.opening-star-line{z-index:4}
 .opening-star-bands .cream{fill:#f6f1e6}.opening-star-bands .gold{fill:#d9a33a}
 .opening-star-line polygon{fill:none;stroke:#16246e;stroke-linejoin:round}
-.opening-sound{position:absolute;right:clamp(24px,5%,70px);bottom:clamp(12px,2.6vh,26px);white-space:nowrap;min-height:32px;padding:2px 8px;border:0;background:transparent;color:#5f1230;font:400 11px/1 "Courier Prime",monospace;letter-spacing:.2em;cursor:pointer}
+.opening-sound{white-space:nowrap;min-height:28px;padding:2px 0 2px 8px;border:0;background:transparent;color:var(--plate-ink,#35190a);text-shadow:0 1px 0 var(--plate-catch,transparent);font:400 max(8.5px,calc(var(--pu,1px) * 10.5))/1 "Courier Prime",monospace;letter-spacing:.16em;cursor:pointer}
+.opening-plaque .opening-sound{grid-area:1/2;justify-self:end;align-self:center}
 .opening-sound:hover{text-decoration:underline}
 .opening-sound:focus-visible{outline:2px dashed #a03953;outline-offset:1px}
 .opening-skip{position:absolute;z-index:5;right:clamp(14px,2.4vw,30px);top:clamp(12px,2.4vh,26px);min-height:44px;padding:6px 14px;border:1.5px solid #16246e;border-radius:3px;background:linear-gradient(#fbe7a8,#dcaa44 42%,#a9741f 72%,#e8c264);color:#2a1608;font:400 15px/1 "Special Elite",serif;letter-spacing:.06em;cursor:pointer;opacity:0;transform:translateY(-4px);transition:opacity .3s,transform .3s;box-shadow:2px 3px 0 #16246e;pointer-events:none}
@@ -51,9 +61,13 @@ html.opening-active,html.opening-active body{overflow:hidden}
 .opening-skip:focus-visible{outline:2px dashed #a03953;outline-offset:3px}
 @media(max-aspect-ratio:1/1){
   .opening-skip{top:clamp(8px,1.6vh,14px);right:10px;min-height:38px;padding:4px 10px;font-size:13px}
-  .opening-actions{flex-direction:column;gap:2px}
-  .opening-plate{flex-direction:column;align-items:center;gap:2px}
-  .opening-action{font-size:19px;min-height:52px}
+  .opening-plaque{grid-template-columns:calc(var(--pu) * 316);row-gap:calc(var(--pu) * 8)}
+  .opening-actions{grid-area:2/1;grid-template-columns:1fr;gap:calc(var(--pu) * 9)}
+  .opening-plate{justify-content:center;flex-wrap:wrap;gap:0 10px;white-space:normal;font-size:calc(var(--pu) * 11.5)}
+  .opening-plate::after{display:none}
+  .opening-wordmark{font-size:calc(var(--pu) * 25)}
+  .opening-action{font-size:calc(var(--pu) * 19);min-height:max(44px,calc(var(--pu) * 54))}
+  .opening-plaque .opening-sound{grid-area:3/1;justify-self:center;min-height:28px;padding:0 8px;font-size:calc(var(--pu) * 11)}
   .opening-small-print{height:5.4vh}
 }
 @media(forced-colors:active){.opening-action .heading-highlights{display:none}}

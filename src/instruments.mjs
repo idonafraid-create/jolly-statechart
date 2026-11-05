@@ -15,7 +15,12 @@ export const INSTRUMENT_COPY = {
 
 const INSTRUMENTS = ['saxophone', 'double-bass', 'rabbit-guitar'];
 const NODE_IDS = { saxophone: 'sax', 'double-bass': 'bass', 'rabbit-guitar': 'rabbit' };
-const C = { paper: '#f7f2e5', ink: '#2140d6', coral: '#e97780', lime: '#ade408', green: '#376d34', wine: '#8e1b2c', gold: '#dcae42' };
+const DAY = { paper: '#f7f2e5', ink: '#2140d6', coral: '#e97780', lime: '#ade408', green: '#376d34', wine: '#8e1b2c', gold: '#dcae42', quiet: '#a03953', card: '#fff8e9', cardShade: '#e7dccb', mark: null };
+// The After Hours sample: only ever switched on from there.
+const NIGHT = { paper: '#2a1a12', ink: '#efe6d0', coral: '#f08a90', lime: '#c9e85a', green: '#c9e85a', wine: '#ffb3cf', gold: '#f2d48a', quiet: '#f7a6ac', card: '#1c2a2c', cardShade: '#111c1e', mark: '#54402a' };
+const C = { ...DAY };
+if (document.documentElement.dataset.house === 'down') Object.assign(C, NIGHT);
+const accentFor = id => (id === 'saxophone' ? C.ink : id === 'double-bass' ? C.green : C.wine);
 const SCORE = { saxophone: [0, .65, 1, .35, 0], 'double-bass': [0, 1, -.65, .25, 0], 'rabbit-guitar': [0, .55, 1, -.6, 0] };
 const HOLDS = { saxophone: [1250,1100,900,1300,1000], 'double-bass': [950,1250,1100,900,1400], 'rabbit-guitar': [1100,900,1350,1200,1050] };
 const VIEWS = { saxophone: [0,1,0,2,0], 'double-bass': [0,2,0,1,0], 'rabbit-guitar': [0,1,0,2,0] };
@@ -76,7 +81,7 @@ async function prepareTickets(scene) {
   const sizes=[[dw,dh,0],[dw,dh,1],[dw,dh,2],[166,65,0],[172,65,1],[164,65,2]];
   await Promise.all(sizes.flatMap(([w,h,index])=>[false,true].map(async active=>{
     const key=`${w}:${h}:${index}:${active}`,image=new Image();
-    image.src='data:image/svg+xml,'+encodeURIComponent(makeTicketSvg({width:w,height:h,stubWidth:23,seed:`instrument-${scene.id}-${index}`,tokens:{ink:scene.accent,card:active?scene.mark:'#fff8e9',paper:active?scene.mark:'#fff8e9','paper-shade':'#e7dccb'}}));
+    image.src='data:image/svg+xml,'+encodeURIComponent(makeTicketSvg({width:w,height:h,stubWidth:23,seed:`instrument-${scene.id}-${index}`,tokens:{ink:scene.accent,card:active?C.mark??scene.mark:C.card,paper:active?C.mark??scene.mark:C.card,'paper-shade':C.cardShade}}));
     await image.decode();scene.tickets.set(key,image);
   })));
 }
@@ -179,7 +184,7 @@ function drawSax(scene, g, time, boil) {
     text(g, scene.copy.note, 62, 215, { size: 16, color: C.wine });
     text(g, 'pearl keys /\nsmall decisions', 620, 220, { size: 15, color: C.wine });
     stroked(g, [[box.x + box.w * .56, box.y + box.h * .39], [575, 220], [610, 220]], C.coral, 1, .7);}
-    text(g, 'THE QUIETEST PART\nIS MADE OF AIR.', 745, 624, { size: 20, color: '#a03953', title: true });
+    text(g, 'THE QUIETEST PART\nIS MADE OF AIR.', 745, 624, { size: 20, color: C.quiet, title: true });
   }
 }
 
@@ -252,10 +257,10 @@ export function createInstrumentChapters(host, { reducedMotion = false, onSound,
   const style = document.createElement('style'); style.textContent = CSS; root.append(style);
   const intro = document.createElement('p'); intro.className = 'instrument-intro'; intro.textContent = INSTRUMENT_COPY.en.intro; root.append(intro);
   const scenes = INSTRUMENTS.map(id => {
-    const copy = INSTRUMENT_COPY.en[id], chapter = document.createElement('section'); chapter.className = `instrument-chapter instrument-${id}`; chapter.id = `instrument-${NODE_IDS[id]}`; chapter.style.setProperty('--instrument-accent', id === 'saxophone' ? C.ink : id === 'double-bass' ? C.green : C.wine); chapter.style.setProperty('--instrument-mark', id === 'saxophone' ? '#f4b9ac' : id === 'double-bass' ? '#d5ec89' : '#f2a2bd');
+    const copy = INSTRUMENT_COPY.en[id], chapter = document.createElement('section'); chapter.className = `instrument-chapter instrument-${id}`; chapter.id = `instrument-${NODE_IDS[id]}`; chapter.style.setProperty('--instrument-accent', accentFor(id)); chapter.style.setProperty('--instrument-mark', id === 'saxophone' ? '#f4b9ac' : id === 'double-bass' ? '#d5ec89' : '#f2a2bd');
     const titleId = `${chapter.id}-title`; chapter.setAttribute('aria-labelledby', titleId);
     chapter.innerHTML = `<header class="instrument-heading"><p class="instrument-eyebrow"><b>${copy.number}.</b><span>${copy.owner}</span></p><h2 class="instrument-title" id="${titleId}">${copy.title}</h2><p class="instrument-subtitle">${copy.sub}</p></header><figure class="instrument-figure"><canvas class="instrument-canvas" aria-hidden="true"></canvas><p class="instrument-loading">${INSTRUMENT_COPY.en.loading}</p><figcaption class="instrument-reader">${copy.caption}. ${copy.sub}</figcaption></figure><div class="instrument-controls"></div><p class="instrument-caption"><span>${copy.caption}</span><em>${copy.aside}</em></p>`;
-    const scene = { id, chapter, copy, canvas: chapter.querySelector('canvas'), figure: chapter.querySelector('figure'), pose: 0,viewIndex:0,views:[],tickets:new Map(),shines:new Map(),enterTime:null,actionStart:0,string: 0, visible: false, dirty: true, rig: null, impulse: null, until: 0, arrows: new Map(), accent: id === 'saxophone' ? C.ink : id === 'double-bass' ? C.green : C.wine, mark: id === 'saxophone' ? '#f5c4bd' : id === 'double-bass' ? '#d6eb9e' : '#f2b9ca' };
+    const scene = { id, chapter, copy, canvas: chapter.querySelector('canvas'), figure: chapter.querySelector('figure'), pose: 0,viewIndex:0,views:[],tickets:new Map(),shines:new Map(),enterTime:null,actionStart:0,string: 0, visible: false, dirty: true, rig: null, impulse: null, until: 0, arrows: new Map(), accent: accentFor(id), mark: id === 'saxophone' ? '#f5c4bd' : id === 'double-bass' ? '#d6eb9e' : '#f2b9ca' };
     copy.actions.forEach((label, index) => {
       const button = document.createElement('button'); button.className = 'instrument-control'; button.type = 'button'; button.disabled = true; button.dataset.instrumentAction = index === 0 ? 'primary' : 'secondary'; button.textContent = label;
       if (index === 0) button.dataset.node = NODE_IDS[id];
@@ -346,6 +351,14 @@ export function createInstrumentChapters(host, { reducedMotion = false, onSound,
   return {
     get ready() { return ready ??= Promise.all(scenes.map(loadScene)); },
     sections: Object.fromEntries(scenes.map(s => [NODE_IDS[s.id], s.chapter])),
+    setNight(down) {
+      Object.assign(C, down ? NIGHT : DAY);
+      for (const scene of scenes) {
+        scene.accent = accentFor(scene.id); scene.chapter.style.setProperty('--instrument-accent', scene.accent);
+        scene.dirty = true;
+        if (scene.tickets.size) prepareTickets(scene).then(() => { scene.dirty = true; }).catch(() => {});
+      }
+    },
     dispose() { disposed = true; cancelAnimationFrame(raf); observer.disconnect(); preload.disconnect(); resizeObserver.disconnect(); root.remove(); scenes.forEach(s => { s.rig = null;s.views=[];s.tickets.clear();s.shines.clear(); s.arrows.clear(); }); },
   };
 }

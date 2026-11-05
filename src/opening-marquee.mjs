@@ -141,6 +141,7 @@ function lampSet(parent, positions, radius, haloSize, disposables) {
   return { lit, count };
 }
 
+const HANG = -.026, STAR_EVERY = 3600;
 export function marquee(shared, kit) {
   const group = new THREE.Group(), board = new THREE.Group(), cord = new THREE.Group(), lip = new THREE.Group(), disposables = [];
   const keep = thing => { disposables.push(thing); return thing; };
@@ -185,6 +186,29 @@ export function marquee(shared, kit) {
   lampSpots.forEach(([x, y], i) => { matrix.makeTranslation(x, y, BOARD_DEPTH + .008); sockets.setMatrixAt(i, matrix); });
   board.add(sockets); disposables.push(sockets);
 
+  // The star in the middle is lit from inside: a hot pink star, a paler heart, and a glow it throws on the wood.
+  const starShape = radius => {
+    const shape = new THREE.Shape();
+    for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? radius * .4457 : radius, x = Math.cos(a) * r, y = Math.sin(a) * r; if (i) shape.lineTo(x, y); else shape.moveTo(x, y); }
+    shape.closePath();
+    return shape;
+  };
+  const STAR_Y = -.055;
+  const starOn = new THREE.Color('#ff5f9e'), starOff = new THREE.Color('#5e1a3c'), heartOn = new THREE.Color('#ffd9e8'), heartOff = new THREE.Color('#8c3560');
+  const starPaint = keep(new THREE.MeshBasicMaterial({ color: starOn.clone(), toneMapped: false })), heartPaint = keep(new THREE.MeshBasicMaterial({ color: heartOn.clone(), toneMapped: false }));
+  const litStar = new THREE.Mesh(keep(new THREE.ShapeGeometry(starShape(.066))), starPaint);
+  const litHeart = new THREE.Mesh(keep(new THREE.ShapeGeometry(starShape(.032))), heartPaint);
+  litStar.position.set(0, STAR_Y, BOARD_DEPTH + .01); litHeart.position.set(0, STAR_Y, BOARD_DEPTH + .012);
+  const glowLevel = { value: .9 };
+  const starGlow = new THREE.Mesh(keep(new THREE.PlaneGeometry(.92, .92)), keep(new THREE.ShaderMaterial({
+    uniforms: { uLevel: glowLevel },
+    vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader: 'uniform float uLevel;varying vec2 vUv;void main(){float d=length(vUv-.5)*2.;float a=(pow(max(0.,1.-d),2.6)*.95+pow(max(0.,1.-d*2.6),1.6)*.5)*uLevel;gl_FragColor=vec4(1.,.3,.6,a);}',
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+  })));
+  starGlow.position.set(0, STAR_Y, BOARD_DEPTH + .014); starGlow.renderOrder = 4;
+  board.add(litStar, litHeart, starGlow);
+
   // The bell-pull: rope, knot and a big tassel, on a pivot so it can swing and be yanked.
   const ropeLength = .42, ropePath = new THREE.CatmullRomCurve3([[0, 0], [.012, -.14], [-.008, -.28], [0, -ropeLength]].map(([x, y]) => new THREE.Vector3(x, y, .05)));
   const cordShape = keep(mergeGeometries([
@@ -196,7 +220,7 @@ export function marquee(shared, kit) {
   const cordMesh = new THREE.Mesh(cordShape, brass); cordMesh.add(new THREE.Mesh(cordShape, fineInk)); cord.add(cordMesh);
 
   let chainMesh = null, lipMeshes = [], footlights = null;
-  const swing = { value: 0, velocity: 0 }, pullState = { value: 0, velocity: 0 };
+  const swing = { value: 0, velocity: 0 }, pullState = { value: 0, velocity: 0 }, rock = { value: 0, velocity: 0 };
   const view = { y: 0, scale: 1, travel: 3, lipHeight: .2, enterAt: -Infinity, lift: 0, hovering: false, pullUntil: 0, lastTick: -1 };
 
   function chain(x, topY) {
@@ -221,7 +245,7 @@ export function marquee(shared, kit) {
     build({ width: viewWidth, top, floor, portrait }) {
       const viewHeight = top - floor;
       // Hung in the middle of the frame, not up against the valance.
-      const scale = Math.min(viewWidth * (portrait ? .88 : .4) / (W * 2.06), viewHeight * .4 / (H * 2.04));
+      const scale = Math.min(viewWidth * (portrait ? .88 : .4) / (W * 2.06), viewHeight * .4 / (H * 2.04)) * .757;
       view.scale = scale; view.travel = viewHeight * 1.5;
       view.y = floor + viewHeight * (portrait ? .6 : .57);
       board.scale.setScalar(scale);
@@ -257,9 +281,9 @@ export function marquee(shared, kit) {
     },
     place(y) { view.y = y; },
     enter(now) { view.enterAt = now; },
-    hover(on) { if (on && !view.hovering) swing.velocity += .5; view.hovering = on; },
+    hover(on) { if (on && !view.hovering) { swing.velocity += .5; rock.velocity += .1; } view.hovering = on; },
     // The hand on the rope: down, and then the curtain goes.
-    pull(now) { view.pullUntil = now + 170; swing.velocity += .3; },
+    pull(now) { view.pullUntil = now + 170; swing.velocity += .3; rock.velocity += .3; },
     lift(amount) { view.lift = amount; if (amount >= 1) { group.visible = false; lip.visible = false; } },
     update(now, dt) {
       let moving = false;
@@ -268,6 +292,11 @@ export function marquee(shared, kit) {
       pullState.value += pullState.velocity * dt;
       swing.velocity += -swing.value * 34 * dt - swing.velocity * 1.5 * dt;
       swing.value += swing.velocity * dt;
+      // Hung on two long chains it rocks toward you and away, slowly, with a small draught always keeping it going.
+      rock.velocity += (-rock.value * 6.2 + Math.sin(now * .00125) * .1) * dt - rock.velocity * .5 * dt;
+      rock.value += rock.velocity * dt;
+      board.rotation.x = rock.value * .9;
+      board.position.z = rock.value * 1.5 * view.scale;
       if (Math.abs(pullState.velocity) > .004 || Math.abs(swing.velocity) > .01) moving = true;
       cord.position.y = -H - Math.max(0, pullState.value); cord.rotation.z = swing.value;
       const entering = Math.min(1, Math.max(0, (now - view.enterAt) / 760));
@@ -276,11 +305,17 @@ export function marquee(shared, kit) {
       const liftEase = view.lift * view.lift * view.lift;
       board.position.y = view.y + (1 - eased) * view.travel + liftEase * view.travel + Math.max(0, pullState.value) * -.1 * view.scale;
       lip.position.y = -liftEase * view.lipHeight * 3;
+      // The star blinks twice, quickly, and rests a few seconds. The curtain's own frames are quick enough to catch it once the page has loaded; before that it would come out as a stutter.
+      const blinkAt = document.readyState === 'complete' ? now % STAR_EVERY : STAR_EVERY;
+      const starLevel = blinkAt < 80 ? 0 : blinkAt < 170 ? 1 : blinkAt < 250 ? 0 : 1;
+      starPaint.color.lerpColors(starOff, starOn, starLevel); heartPaint.color.lerpColors(heartOff, heartOn, starLevel);
+      glowLevel.value = starLevel * (blinkAt < 340 ? 1.2 : .92);
       // Everything held on the site's threes: the slight sway and the running lights.
       const tick = Math.floor(now / 195);
       if (tick !== view.lastTick) {
         view.lastTick = tick;
-        board.rotation.z = Math.sin(tick * .37) * .0045;
+        // The right-hand chain is a little longer than the left.
+        board.rotation.z = HANG + Math.sin(tick * .37) * .0045;
         for (let i = 0; i < lamps.count; i++) lamps.lit.setX(i, view.hovering || (i + tick) % 3 === 0 ? 1 : .34);
         lamps.lit.needsUpdate = true;
         if (footlights) { for (let i = 0; i < footlights.set.count; i++) footlights.set.lit.setX(i, .82 + ((i * 7 + tick) % 5) * .04); footlights.set.lit.needsUpdate = true; }

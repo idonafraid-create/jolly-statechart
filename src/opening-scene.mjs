@@ -45,6 +45,21 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
   renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y';
   const kit = await loadPencilKit(renderer);
   const shared = sharedUniforms(kit);
+  // The same paper tooth the pencil shader breaks its pigment with, thresholded the same way, for the page-layer buttons on the plate.
+  const paintFlecks = () => {
+    const { data, width, height } = kit.tooth.image, canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    const g = canvas.getContext('2d'), image = g.createImageData(width, height);
+    for (let i = 0; i < width * height; i++) {
+      const tooth = data[i] / 255, t = Math.max(0, Math.min(1, (tooth - .72) / .12));
+      image.data[i * 4] = 255; image.data[i * 4 + 1] = 247; image.data[i * 4 + 2] = 230; image.data[i * 4 + 3] = 255 * t * t * (3 - 2 * t) * .62;
+    }
+    g.putImageData(image, 0, 0);
+    canvas.toBlob(blob => {
+      if (!blob || disposed) return;
+      fleckUrl = URL.createObjectURL(blob);
+      plaque?.style.setProperty('--flecks', `url(${fleckUrl})`);
+    });
+  };
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FOV, 1, .1, 60);
   const wall = wallPass(shared), hoop = waveHoop(wall.uniforms), stars = farStars(shared), clock = lobbyClock(shared, kit), racks = keyRacks(shared, kit);
@@ -77,7 +92,8 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
   const assembly = { start: Infinity, landed: false };
   let disposed = false, frame = 0, last = 0, lastPaint = 0, activeUntil = 0, pressing = false, pressTarget = 0, pressStart = 0, pressReleaseAt = Infinity, beatCursor = 0, lastInvite = 0, impactArmed = false, impactAt = -Infinity;
   let shiftIndex = -1, waveStart = -Infinity, waveFrom = 0, rayBase = 0, actors = {}, pending = [], launch = null, entering = false, midnight = false, minuteTicks = -1, lastSecond = -1, hoverBell = false, resizeTimer = 0, lastFrameAt = 0, slowFrames = 0, activeCast = [];
-  const sway = { value: 0, phase: 0 }, textures = [], pointerDrape = new THREE.Vector3();
+  const sway = { value: 0, phase: 0 }, textures = [], pointerDrape = new THREE.Vector3(), lastDrape = new THREE.Vector3();
+  let stir = 0;
   let closed = true, curtainGone = false, drapeAt = Infinity, peek = 0, peekGoal = 0, give = 0, ambient = false;
 
   function project(x, y, z) {
@@ -90,6 +106,34 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
     ray.direction.set(ndcX, ndcY, .5).unproject(camera).sub(camera.position).normalize();
     plane.constant = -z;
     return ray.intersectPlane(plane, out);
+  }
+  // The words on the brass plate are a page layer over the 3D desk. They follow the plate's four corners as the camera moves, so they stay printed on it.
+  const plaque = host.querySelector('.opening-plaque');
+  paintFlecks();
+  let plateRect = null, plateTransform = '', plateBoil = -1, fleckUrl = '', warming = false;
+  const plateCorners = () => {
+    const { halfWidth: x, top, bottom } = plateRect, z = DESK_FRONT + .013;
+    return [project(-x, top, z), project(x, top, z), project(x, bottom, z), project(-x, bottom, z)];
+  };
+  function sizePlate() {
+    if (!plaque) return;
+    const [a, b, , d] = plateCorners();
+    plateRect.width = Math.hypot(b.x - a.x, b.y - a.y); plateRect.height = Math.hypot(d.x - a.x, d.y - a.y);
+    // Everything on the plate is sized in this one unit, so it fits however wide the plate comes out.
+    const unit = matchMedia('(max-aspect-ratio:1/1)').matches ? Math.min(plateRect.width / 340, plateRect.height / 252) : Math.min(plateRect.width / 760, plateRect.height / 128);
+    plaque.style.width = `${plateRect.width}px`; plaque.style.height = `${plateRect.height}px`;
+    plaque.style.setProperty('--pu', `${unit}px`);
+    syncPlate();
+    plaque.dispatchEvent(new Event('plate-sized'));
+  }
+  function syncPlate() {
+    if (!plaque || !plateRect) return;
+    const [a, b, c, d] = plateCorners(), w = plateRect.width, h = plateRect.height;
+    const dx1 = b.x - c.x, dx2 = d.x - c.x, dx3 = a.x - b.x + c.x - d.x, dy1 = b.y - c.y, dy2 = d.y - c.y, dy3 = a.y - b.y + c.y - d.y;
+    const den = dx1 * dy2 - dx2 * dy1, g = (dx3 * dy2 - dx2 * dy3) / den, k = (dx1 * dy3 - dx3 * dy1) / den;
+    const matrix = [(b.x - a.x + g * b.x) / w, (b.y - a.y + g * b.y) / w, 0, g / w, (d.x - a.x + k * d.x) / h, (d.y - a.y + k * d.y) / h, 0, k / h, 0, 0, 1, 0, a.x, a.y, 0, 1];
+    const transform = `matrix3d(${matrix.map(value => +value.toFixed(7)).join(',')})`;
+    if (transform !== plateTransform) { plateTransform = transform; plaque.style.transform = transform; }
   }
   function aimCamera(yaw = 0, pitch = 0) {
     const elevation = PITCH + pitch;
@@ -127,13 +171,12 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
     top.mesh.position.set(0, 0, (DESK_FRONT + DESK_BACK) / 2);
 
     // Find how much desk front the frame shows, then build its relief to exactly that height.
-    const edge = project(0, 0, DESK_FRONT), bottom = new THREE.Vector3();
+    const bottom = new THREE.Vector3();
     onPlane(0, -1, DESK_FRONT, bottom);
     const deskHeight = -bottom.y + .03;
     const plaqueWidth = view.portrait ? Math.min(atFront * .94, 3.4) : Math.min(atFront * .58, 4.5);
-    front.build({ width: atFront, height: deskHeight, plaqueWidth });
-    host.style.setProperty('--desk-top', `${edge.y}px`);
-    host.style.setProperty('--desk-plaque', `${plaqueWidth / atFront * width}px`);
+    plateRect = front.build({ width: atFront, height: deskHeight, plaqueWidth });
+    sizePlate();
 
     // Clock rises from behind the desk like the sunrise on the theatre's crown.
     const radius = view.portrait ? 1.8 : 1.98, centreY = view.portrait ? .84 : .56;
@@ -370,10 +413,15 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
     peek += (peekGoal - peek) * (1 - Math.exp(-dt * 7));
     give += ((pointer.seen ? 1 : 0) - give) * (1 - Math.exp(-dt * 6));
     const u = drape.uniforms;
+    // How fast the hand is crossing the cloth: it rises at once and takes a while to settle.
+    const crossing = Math.min(1, Math.hypot(pointerDrape.x - lastDrape.x, pointerDrape.y - lastDrape.y) / Math.max(dt, .008) * .16);
+    lastDrape.copy(pointerDrape);
+    stir += (crossing - stir) * (1 - Math.exp(-dt * (crossing > stir ? 12 : 1.5)));
+    u.uStir.value = stir;
     u.uOpen.value = peek; u.uClock.value = now / 1000; u.uPress.value.set(pointerDrape.x, pointerDrape.y, give);
     drape.warmth(clamp01(peek / .05));
     const signMoving = sign.update(now, dt);
-    return signMoving || Math.abs(peekGoal - peek) > .001 || Math.abs((pointer.seen ? 1 : 0) - give) > .01;
+    return signMoving || stir > .01 || Math.abs(peekGoal - peek) > .001 || Math.abs((pointer.seen ? 1 : 0) - give) > .01;
   }
 
   function update(now, dt) {
@@ -550,6 +598,10 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
     if (disposed) return;
     const t = Math.floor(now / 195);
     shared.uBoil.value = t % 3;
+    if (!closed) {
+      syncPlate();
+      if (plaque && plateBoil !== t % 3) { plateBoil = t % 3; plaque.dataset.boil = plateBoil; }
+    }
     renderer.render(scene, camera);
     lastPaint = now;
   }
@@ -568,7 +620,9 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
     // Three speeds: 60fps at most while something is really moving, half that for the band's lights and the drifting
     // star, and a resting drawing, the closed curtain included, redrawn on threes like the rest of the site's boil.
     const since = now - lastPaint;
-    if (now < activeUntil ? since >= 14 : ambient && !closed ? since >= 31 : since > 190) paint(now);
+    // The sign rocks smoothly once the page beneath has finished loading; until then the curtain must not compete with it.
+    const curtainFrame = closed && document.readyState === 'complete' ? 48 : 190;
+    if (!warming && (now < activeUntil ? since >= 14 : ambient && !closed ? since >= 31 : since >= curtainFrame)) paint(now);
     if (!document.hidden) requestPaint();
   }
 
@@ -673,6 +727,7 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
   }
 
   function dispose() {
+    if (fleckUrl) URL.revokeObjectURL(fleckUrl);
     if (disposed) return;
     disposed = true; cancelAnimationFrame(frame); resizeObserver.disconnect();
     document.removeEventListener('visibilitychange', visibility);
@@ -691,10 +746,26 @@ export async function createOpeningScene(host, { onRing, onLand, onShift, onStru
     const cast = Object.values(actors);
     const show = visible => { stage.visible = visible; cast.forEach(item => { item.mesh.visible = visible; }); };
     show(true);
-    const compiling = renderer.compileAsync(scene, camera).catch(() => {});
-    show(false);
-    // A slow machine finishes compiling on first use instead of keeping the curtain down.
-    await Promise.race([compiling, new Promise(resolve => setTimeout(resolve, 2500))]);
+    if (renderer.extensions.has('KHR_parallel_shader_compile')) {
+      const compiling = renderer.compileAsync(scene, camera).catch(() => {});
+      show(false);
+      // A slow machine finishes compiling on first use instead of keeping the curtain down.
+      await Promise.race([compiling, new Promise(resolve => setTimeout(resolve, 2500))]);
+    } else {
+      // No background compiling here, so the first question put to any program waits for all the ones queued before it. Hand them over one material at a time and give the page a turn
+      // in between, so a slow machine's curtain still answers the hand instead of freezing for seconds. The curtain stands still meanwhile, or its frames would wait for the compiler too.
+      warming = true;
+      const seen = new Set(), parts = [];
+      scene.traverse(object => { if (object.isMesh && object.material && !seen.has(object.material)) { seen.add(object.material); parts.push(object); } });
+      for (const part of parts) {
+        renderer.compile(part, camera, scene);
+        renderer.info.programs.at(-1)?.getUniforms();
+        await new Promise(resolve => setTimeout(resolve, 0));
+        if (disposed) return;
+      }
+      warming = false;
+      show(false);
+    }
     if (disposed) return;
     show(true);
     renderer.setScissorTest(true); renderer.setScissor(0, 0, 1, 1);
